@@ -33,7 +33,7 @@ function member_data ($opts = array()) {
     // Query database
     $sql = "
         SELECT
-        `member`.`cid`, `firstName`, `middleName`, `lastName`, `email`, `phone`, `emergencyName`, `emergencyPhone`,
+        `member`.`cid`, `firstName`, `lastName`, `email`, `phone`, `emergencyName`, `emergencyPhone`,
         `username`, `hash`
         FROM `member`
         LEFT JOIN `contact` ON `member`.`cid`=`contact`.`cid`
@@ -84,7 +84,6 @@ function member_data ($opts = array()) {
             'contact' => array(
                 'cid' => $row['cid'],
                 'firstName' => $row['firstName'],
-                'middleName' => $row['middleName'],
                 'lastName' => $row['lastName'],
                 'email' => $row['email'],
                 'phone' => $row['phone'],
