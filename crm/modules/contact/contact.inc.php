@@ -59,7 +59,6 @@ function contact_install ($old_revision = 0) {
             CREATE TABLE IF NOT EXISTS `contact` (
               `cid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `firstName` varchar(255) NOT NULL,
-              `middleName` varchar(255) NOT NULL,
               `lastName` varchar(255) NOT NULL,
               `email` varchar(255) NOT NULL,
               `phone` varchar(32) NOT NULL,
@@ -109,7 +108,7 @@ function contact_data ($opts = array()) {
         foreach ($opts['filter'] as $name => $param) {
             switch ($name) {
                 case 'nameLike':                    
-                    // Split on first comma and create an array of name parts in "first middle last" order
+                    // Split on first comma and create an array of name parts in "first last" order
                     $parts = explode(',', $param, 2);
                     $names = array();
                     foreach (array_reverse($parts) as $part) {
@@ -122,21 +121,10 @@ function contact_data ($opts = array()) {
                     }
                     // Set where clauses based on number of name segments given
                     if (sizeof($names) === 1) {
-                        $sql .= "AND (`firstName` LIKE '%$names[0]%' OR `middleName` LIKE '%$names[0]%' OR `lastName` LIKE '%$names[0]%') ";
+                        $sql .= "AND (`firstName` LIKE '%$names[0]%' OR `lastName` LIKE '%$names[0]%')";
                     } else if (sizeof($names) === 2) {
-                        $sql .= "
-                            AND (
-                                (`firstName` LIKE '%$names[0]%' AND (`middleName` LIKE '%$names[1]%' OR `lastName` LIKE '%$names[1]%'))
-                                OR (`middleName` LIKE '%$names[0]%' AND `lastName` LIKE '%$names[1]%')
-                            )
-                        ";
-                    } else if (sizeof($names) === 3) {
-                        $sql .= "
-                            AND `firstName` LIKE '%$names[0]%'
-                            AND `middleName` LIKE '%$names[1]%'
-                            AND `lastName` LIKE '%$names[2]%'
-                        ";
-                    }
+                        $sql .= "AND (`firstName` LIKE '%$names[0]%' AND `lastName` LIKE '%$names[1]%')";
+                    } 
                     break;
                 default:
                 break;
@@ -144,7 +132,7 @@ function contact_data ($opts = array()) {
         }
     }
     $sql .= "
-        ORDER BY `lastName`, `firstName`, `middleName` ASC";
+        ORDER BY `lastName`, `firstName` ASC";
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     // Store data
@@ -154,7 +142,6 @@ function contact_data ($opts = array()) {
         $contacts[] = array(
             'cid' => $row['cid'],
             'firstName' => $row['firstName'],
-            'middleName' => $row['middleName'],
             'lastName' => $row['lastName'],
             'email' => $row['email'],
             'phone' => $row['phone'],
@@ -171,7 +158,7 @@ function contact_data ($opts = array()) {
  * Saves a contact.
  */
 function contact_save ($contact) {
-    $fields = array('cid', 'firstName', 'middleName', 'lastName', 'email', 'phone', 'emergencyName', 'emergencyPhone');
+    $fields = array('cid', 'firstName', 'lastName', 'email', 'phone', 'emergencyName', 'emergencyPhone');
     $escaped = array();
     foreach ($fields as $field) {
         $escaped[$field] = mysql_real_escape_string($contact[$field]);
@@ -181,7 +168,6 @@ function contact_save ($contact) {
         $sql = "
             UPDATE `contact`
             SET `firstName`='$escaped[firstName]'
-                , `middleName`='$escaped[middleName]'
                 , `lastName`='$escaped[lastName]'
                 , `email`='$escaped[email]'
                 , `phone`='$escaped[phone]'
@@ -199,9 +185,9 @@ function contact_save ($contact) {
         // Add contact
         $sql = "
             INSERT INTO `contact`
-            (`firstName`,`middleName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
+            (`firstName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
             VALUES
-            ('$escaped[firstName]','$escaped[middleName]','$escaped[lastName]','$escaped[email]','$escaped[phone]','$escaped[emergencyName]','$escaped[emergencyPhone]')";
+            ('$escaped[firstName]','$escaped[lastName]','$escaped[email]','$escaped[phone]','$escaped[emergencyName]','$escaped[emergencyPhone]')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $contact['cid'] = mysql_insert_id();
@@ -284,7 +270,6 @@ function contact_table ($opts = array()) {
         $table['columns'][] = array('title'=>'Contact ID','class'=>'');
         $table['columns'][] = array('title'=>'Last','class'=>'');
         $table['columns'][] = array('title'=>'First','class'=>'');
-        $table['columns'][] = array('title'=>'Middle','class'=>'');
     } else {
         $table['columns'][] = array('title'=>'Name','class'=>'');
     }
@@ -313,7 +298,6 @@ function contact_table ($opts = array()) {
             $row[] = $contact['cid'];
             $row[] = $contact['lastName'];
             $row[] = $contact['firstName'];
-            $row[] = $contact['middleName'];
         } else {
             $row[] = $name_link;
         }
@@ -401,11 +385,6 @@ function contact_form ($opts = array()) {
                 'type' => 'text'
                 , 'label' => 'First Name'
                 , 'name' => 'firstName'
-            )
-            , array(
-                'type' => 'text'
-                , 'label' => 'Middle Name'
-                , 'name' => 'middleName'
             )
             , array(
                 'type' => 'text'
@@ -498,7 +477,6 @@ function command_contact_add () {
     // Build contact object
     $contact = array(
         'firstName' => $_POST['firstName']
-        , 'middleName' => $_POST['middleName']
         , 'lastName' => $_POST['lastName']
         , 'email' => $_POST['email']
         , 'phone' => $_POST['phone']
@@ -531,7 +509,6 @@ function command_contact_update () {
     // Update contact data
     $contact['firstName'] = $_POST['firstName'];
     $contact['middleName'] = $_POST['middleName'];
-    $contact['lastName'] = $_POST['lastName'];
     $contact['email'] = $_POST['email'];
     $contact['phone'] = $_POST['phone'];
     $contact['emergencyName'] = $_POST['emergencyName'];
@@ -648,12 +625,8 @@ function theme_contact_name ($contact, $link = false, $path = 'contact') {
         $contact = crm_get_one('contact', array('cid'=>$contact));
     }
     $first = $contact['firstName'];
-    $middle = $contact['middleName'];
     $last = $contact['lastName'];
     $name = "$last, $first";
-    if (!empty($middle)) {
-        $name .= " $middle";
-    }
     if ($link) {
         $url_opts = array('query' => array('cid' => $contact['cid']));
         $name = crm_link($name, $path, $url_opts);
