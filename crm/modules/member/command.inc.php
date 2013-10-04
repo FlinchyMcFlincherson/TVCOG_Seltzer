@@ -75,7 +75,6 @@ function command_member_add () {
     // Build contact object
     $contact = array(
         'firstName' => $_POST['firstName']
-        , 'middleName' => $_POST['middleName']
         , 'lastName' => $_POST['lastName']
         , 'email' => $_POST['email']
         , 'phone' => $_POST['phone']
@@ -404,7 +403,6 @@ function command_member_import () {
         
         // Add contact
         $firstName = mysql_real_escape_string($row['firstname']);
-        $middleName = mysql_real_escape_string($row['middlename']);
         $lastName = mysql_real_escape_string($row['lastname']);
         $email = mysql_real_escape_string($row['email']);
         $phone = mysql_real_escape_string($row['phone']);
@@ -412,9 +410,9 @@ function command_member_import () {
         $emergencyPhone = mysql_real_escape_string($row['emergencyphone']);
         $sql = "
             INSERT INTO `contact`
-            (`firstName`,`middleName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
+            (`firstName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
             VALUES
-            ('$firstName','$middleName','$lastName','$email','$phone','$emergencyName','$emergencyPhone')";
+            ('$firstName','$lastName','$email','$phone','$emergencyName','$emergencyPhone')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $cid = mysql_insert_id();
