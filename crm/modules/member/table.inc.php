@@ -61,7 +61,6 @@ function member_table ($opts = NULL) {
             $table['columns'][] = array('title'=>'Contact ID','class'=>'');
             $table['columns'][] = array('title'=>'Last','class'=>'');
             $table['columns'][] = array('title'=>'First','class'=>'');
-            $table['columns'][] = array('title'=>'Middle','class'=>'');
         } else {
             $table['columns'][] = array('title'=>'Name','class'=>'');
         }
@@ -102,7 +101,6 @@ function member_table ($opts = NULL) {
                 $row[] = $member['contact']['cid'];
                 $row[] = $member['contact']['lastName'];
                 $row[] = $member['contact']['firstName'];
-                $row[] = $member['contact']['middleName'];
             } else {
                 $row[] = $name_link;
             }
@@ -186,9 +184,6 @@ function member_voting_report_table () {
         if (user_access('member_view')) {
             $name = $member['contact']['lastName']
                 . ', ' . $member['contact']['firstName'];
-            if (!empty($member['contact']['middleName'])) {
-                $name .= ' ' . $member['contact']['middleName'];
-            }
             $row[] = $name;
             $row[] = ' ';
             $row[] = ' ';
