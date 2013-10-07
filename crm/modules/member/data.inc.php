@@ -70,7 +70,7 @@ function member_data ($opts = array()) {
         }
     }
     $sql .= " GROUP BY `member`.`cid` ";
-    $sql .= " ORDER BY `lastName`, `firstName`, `middleName` ASC ";
+    $sql .= " ORDER BY `lastName`, `firstName` ASC ";
 
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
