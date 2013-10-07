@@ -451,7 +451,7 @@ function mentor_edit_form ($cid) {
     $contact = $data[0];
     
     // Construct member name
-    $name = member_name($contact['firstName'], $contact['middleName'], $contact['lastName']);
+    $name = member_name($contact['firstName'], $contact['lastName']);
     
     // Get list of current mentor cids.
     $mentor_cids = $contact['member']['mentorships']['mentor_cids'];
@@ -527,7 +527,7 @@ function mentor_delete_form ($cid) {
     $contact = $data[0];
     
     // Construct member name
-    $name = member_name($contact['firstName'], $contact['middleName'], $contact['lastName']);
+    $name = member_name($contact['firstName'], $contact['lastName']);
     
     // Get list of current mentor cids.
     $mentor_cid = $contact['member']['mentorships']['mentor_cids'][0];
