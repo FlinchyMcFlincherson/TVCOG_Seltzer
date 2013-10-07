@@ -508,7 +508,7 @@ function command_contact_update () {
     }
     // Update contact data
     $contact['firstName'] = $_POST['firstName'];
-    $contact['middleName'] = $_POST['middleName'];
+    $contact['lastName'] = $_POST['lastName'];
     $contact['email'] = $_POST['email'];
     $contact['phone'] = $_POST['phone'];
     $contact['emergencyName'] = $_POST['emergencyName'];
