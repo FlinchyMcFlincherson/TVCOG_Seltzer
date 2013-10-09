@@ -391,9 +391,6 @@ function member_membership_delete_form ($sid) {
         return array();
     }
     $member_name = $member['contact']['firstName'];
-    if (!empty($member['contact']['middleName'])) {
-        $member_name .= ' ' . $member['contact']['middleName'];
-    }
     $member_name .= ' ' . $member['contact']['lastName'];
     */
     
