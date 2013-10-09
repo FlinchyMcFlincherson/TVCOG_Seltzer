@@ -21,7 +21,7 @@
 */
 
 /**
- * Convert first, middle, last into a single name string. Deprecated, use
+ * Convert first, last into a single name string. Deprecated, use
  * theme_contact_name() instead.
  *
  * @param $first First name
