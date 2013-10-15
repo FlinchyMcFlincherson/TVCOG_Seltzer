@@ -58,12 +58,25 @@ function contact_install ($old_revision = 0) {
         $sql = '
             CREATE TABLE IF NOT EXISTS `contact` (
               `cid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+              `memberNumber` mediumint(8) unsigned NOT NULL,
               `firstName` varchar(255) NOT NULL,
               `lastName` varchar(255) NOT NULL,
+              `joined` date NOT NULL,
+              `company` varchar(255) NOT NULL,
+              `school` varchar(255) NOT NULL,
+              `studentID` varchar(255) NOT NULL,
+              `address1` varchar(255) NOT NULL,
+              `address2` varchar(255) NOT NULL,
+              `city` varchar(255) NOT NULL,
+              `state` varchar(255) NOT NULL,
+              `zip` char(5) NOT NULL,
               `email` varchar(255) NOT NULL,
               `phone` varchar(32) NOT NULL,
+              `over18` tinyint(1) NOT NULL,
               `emergencyName` varchar(255) NOT NULL,
+              `emergencyRelation` varchar(255) NOT NULL,
               `emergencyPhone` varchar(16) NOT NULL,
+              `emergencyEmail` varchar(255) NOT NULL,
               PRIMARY KEY (`cid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
@@ -141,12 +154,25 @@ function contact_data ($opts = array()) {
     while (!empty($row)) {
         $contacts[] = array(
             'cid' => $row['cid'],
+            'memberNumber' => $row['memberNumber'],
             'firstName' => $row['firstName'],
             'lastName' => $row['lastName'],
+            'joined' => $row['joined'],
+            'company' => $row['company'],
+            'school' => $row['school'],
+            'studentID' => $row['studentID'],
+            'address1' => $row['address1'],
+            'address2' => $row['address2'],
+            'city' => $row['city'],
+            'state' => $row['state'],
+            'zip' => $row['zip'],
             'email' => $row['email'],
             'phone' => $row['phone'],
+            'over18' => $row['over18'],
             'emergencyName' => $row['emergencyName'],
-            'emergencyPhone' => $row['emergencyPhone']
+            'emergencyRelation' => $row['emergencyRelation'],
+            'emergencyPhone' => $row['emergencyPhone'],
+            'emergencyEmail' => $row['emergencyEmail']
         );
         $row = mysql_fetch_assoc($res);
     }
@@ -158,7 +184,7 @@ function contact_data ($opts = array()) {
  * Saves a contact.
  */
 function contact_save ($contact) {
-    $fields = array('cid', 'firstName', 'lastName', 'email', 'phone', 'emergencyName', 'emergencyPhone');
+    $fields = array('cid', 'memberNumber', 'firstName', 'lastName', 'joined', 'company', 'school', 'studentID', 'address1', 'address2', 'city', 'state', 'zip', 'email', 'phone', 'over18', 'emergencyName', 'emergencyRelation', 'emergencyPhone', 'emergencyEmail');
     $escaped = array();
     foreach ($fields as $field) {
         $escaped[$field] = mysql_real_escape_string($contact[$field]);
@@ -167,12 +193,25 @@ function contact_save ($contact) {
         // Update contact
         $sql = "
             UPDATE `contact`
-            SET `firstName`='$escaped[firstName]'
+            SET `memberNumber`='$escaped[memberNumber]'
+                ,`firstName`='$escaped[firstName]'
                 , `lastName`='$escaped[lastName]'
+                , `joined`='$escaped[joined]'
+                , `company`='$escaped[company]'
+                , `school`='$escaped[school]'
+                , `studentID`='$escaped[studentID]'
+                , `address1`='$escaped[address1]'
+                , `address2`='$escaped[address2]'
+                , `city`='$escaped[city]'
+                , `state`='$escaped[state]'
+                , `zip`='$escaped[zip]'
                 , `email`='$escaped[email]'
                 , `phone`='$escaped[phone]'
+                , `over18`='$escaped[over18]'
                 , `emergencyName`='$escaped[emergencyName]'
+                , `emergencyRelation`='$escaped[emergencyRelation]'
                 , `emergencyPhone`='$escaped[emergencyPhone]'
+                , `emergencyEmail`='$escaped[emergencyEmail]'
             WHERE `cid`='$escaped[cid]'
         ";
         $res = mysql_query($sql);
@@ -185,9 +224,9 @@ function contact_save ($contact) {
         // Add contact
         $sql = "
             INSERT INTO `contact`
-            (`firstName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
+            (`memberNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`)
             VALUES
-            ('$escaped[firstName]','$escaped[lastName]','$escaped[email]','$escaped[phone]','$escaped[emergencyName]','$escaped[emergencyPhone]')";
+            ('$escaped[memberNumber]','$escaped[firstName]','$escaped[lastName]','$escaped[joined]','$escaped[company]','$escaped[school]','$escaped[studentID]','$escaped[address1]','$escaped[address2]','$escaped[city]','$escaped[state]','$escaped[zip]','$escaped[email]','$escaped[phone]','$escaped[over18]','$escaped[emergencyName]','$escaped[emergencyRelation]','$escaped[emergencyPhone]','$escaped[emergencyEmail]')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $contact['cid'] = mysql_insert_id();
@@ -278,8 +317,14 @@ function contact_table ($opts = array()) {
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
         $table['columns'][] = array('title'=>'Emergency Contact','class'=>'');
     }
+    if (!array_key_exists('exclude', $opts) || !in_array('emergencyRelation', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Emergency Contact Relation','class'=>'');
+    }
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyPhone', $opts['exclude'])) {
         $table['columns'][] = array('title'=>'Emergency Phone','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Emergency Email','class'=>'');
     }
     // Add ops column
     if ($show_ops && !$export && (user_access('contact_edit') || user_access('contact_delete'))) {
@@ -306,8 +351,14 @@ function contact_table ($opts = array()) {
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
             $row[] = $contact['emergencyName'];
         }
+        if (!array_key_exists('exclude', $opts) || !in_array('emergencyRelation', $opts['exclude'])) {
+            $row[] = $contact['emergencyRelation'];
+        }
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyPhone', $opts['exclude'])) {
             $row[] = $contact['emergencyPhone'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
+            $row[] = $contact['emergencyEmail'];
         }
         
         // Construct ops array
@@ -383,6 +434,11 @@ function contact_form ($opts = array()) {
         'fields' => array(
             array(
                 'type' => 'text'
+                , 'label' => 'Member Number'
+                , 'name' => 'memberNumber'
+            )
+            , array(
+                'type' => 'text'
                 , 'label' => 'First Name'
                 , 'name' => 'firstName'
             )
@@ -390,6 +446,52 @@ function contact_form ($opts = array()) {
                 'type' => 'text'
                 , 'label' => 'Last Name'
                 , 'name' => 'lastName'
+            )
+            , array(
+                'type' => 'text'
+                , 'class' => 'date'
+                , 'label' => 'Joined'
+                , 'name' => 'joined'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Company'
+                , 'name' => 'company'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'School'
+                , 'name' => 'school'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Student ID #'
+                , 'name' => 'studentID'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Address Line 1'
+                , 'name' => 'address1'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Address Line 2'
+                , 'name' => 'address2'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'City'
+                , 'name' => 'city'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'State'
+                , 'name' => 'state'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'ZIP'
+                , 'name' => 'zip'
             )
             , array(
                 'type' => 'text'
@@ -402,14 +504,29 @@ function contact_form ($opts = array()) {
                 , 'name' => 'phone'
             )
             , array(
+                'type' => 'checkbox'
+                , 'label' => 'Over 18?'
+                , 'name' => 'over18'
+            )
+            , array(
                 'type' => 'text'
                 , 'label' => 'Emergency Contact'
                 , 'name' => 'emergencyName'
             )
             , array(
                 'type' => 'text'
-                , 'label' => 'Emergency Phone'
+                , 'label' => 'Emergency Contact Relation'
+                , 'name' => 'emergencyRelation'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Emergency Contact Phone'
                 , 'name' => 'emergencyPhone'
+            )
+            , array(
+                'type' => 'text'
+                , 'label' => 'Emergency Contact Email'
+                , 'name' => 'emergencyEmail'
             )
         )
     );
@@ -476,12 +593,25 @@ function command_contact_add () {
     }
     // Build contact object
     $contact = array(
-        'firstName' => $_POST['firstName']
+        'memberNumber' => $_POST['memberNumber']
+        , 'firstName' => $_POST['firstName']
         , 'lastName' => $_POST['lastName']
+        , 'joined' => $_POST['joined']
+        , 'company' => $_POST['company']
+        , 'school' => $_POST['school']
+        , 'studentID' => $_POST['studentID']
+        , 'address1' => $_POST['address1']
+        , 'address2' => $_POST['address2']
+        , 'city' => $_POST['city']
+        , 'state' => $_POST['state']
+        , 'zip' => $_POST['zip']
         , 'email' => $_POST['email']
         , 'phone' => $_POST['phone']
+        , 'over18' => $_POST['over18']
         , 'emergencyName' => $_POST['emergencyName']
+        , 'emergencyRelation' => $_POST['emergencyRelation']
         , 'emergencyPhone' => $_POST['emergencyPhone']
+        , 'emergencyEmail' => $_POST['emergencyEmail']
     );
     // Save to database
     $contact = contact_save($contact);
@@ -507,12 +637,25 @@ function command_contact_update () {
         return crm_url('contacts');
     }
     // Update contact data
+    $contact['memberNumber'] = $_POST['memberNumber'];
     $contact['firstName'] = $_POST['firstName'];
     $contact['lastName'] = $_POST['lastName'];
+    $contact['joined'] = $_POST['joined'];
+    $contact['company'] = $_POST['company'];
+    $contact['school'] = $_POST['school'];
+    $contact['studentID'] = $_POST['studentID'];
+    $contact['address1'] = $_POST['address1'];
+    $contact['address2'] = $_POST['address2'];
+    $contact['city'] = $_POST['city'];
+    $contact['state'] = $_POST['state'];
+    $contact['zip'] = $_POST['zip'];
     $contact['email'] = $_POST['email'];
     $contact['phone'] = $_POST['phone'];
+    $contact['over18'] = $_POST['over18'];
     $contact['emergencyName'] = $_POST['emergencyName'];
+    $contact['emergencyRelation'] = $_POST['emergencyRelation'];
     $contact['emergencyPhone'] = $_POST['emergencyPhone'];
+    $contact['emergencyEmail'] = $_POST['emergencyEmail'];
     // Save changes to database
     $contact = contact_save($contact);
     return crm_url('contacts');
@@ -562,7 +705,7 @@ function contact_page (&$page_data, $page_name) {
             if (user_access('contact_view')) {
                 $opts = array(
                     'show_export'=>true
-                    , 'exclude'=>array('emergencyName', 'emergencyPhone')
+                    , 'exclude'=>array('emergencyName', 'emergencyRelation', 'emergencyPhone', 'emergencyEmail')
                 );
                 $view = theme('table', 'contact', $opts);
                 page_add_content_top($page_data, $view, 'View');
