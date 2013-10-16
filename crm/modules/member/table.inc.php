@@ -55,23 +55,66 @@ function member_table ($opts = NULL) {
     
     // Add columns
     $table['columns'] = array();
-    
     if (user_access('member_view')) {
         if ($export) {
             $table['columns'][] = array('title'=>'Contact ID','class'=>'');
+            $table['columns'][] = array('title'=>'Member Number','class'=>'');
             $table['columns'][] = array('title'=>'Last','class'=>'');
             $table['columns'][] = array('title'=>'First','class'=>'');
         } else {
+            $table['columns'][] = array('title'=>'Mem #','class'=>'');
             $table['columns'][] = array('title'=>'Name','class'=>'');
         }
-        $table['columns'][] = array('title'=>'Membership','class'=>'');
-        $table['columns'][] = array('title'=>'E-Mail','class'=>'');
-        $table['columns'][] = array('title'=>'Phone','class'=>'');
+        if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Joined','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array($plan, $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Membership','class'=>'');
+        }        
+        if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Company','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('school', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'School','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('studentID', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Student ID','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('address1', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Address','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('address2', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Address','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('city', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'City','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('state', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'State','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('zip', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'ZIP','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('phone', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Phone','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('email', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Email','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('over18', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Over 18?','class'=>'');
+        }                                                        
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'Emergency Contact','class'=>'');
         }
+        if (!array_key_exists('exclude', $opts) || !in_array('emergencyRelation', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'E.C. Relation','class'=>'');
+        }
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyPhone', $opts['exclude'])) {
-            $table['columns'][] = array('title'=>'Emergency Phone','class'=>'');
+            $table['columns'][] = array('title'=>'E.C. Phone','class'=>'');
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'E.C. Email','class'=>'');
         }
     }
     // Add ops column
@@ -99,19 +142,63 @@ function member_table ($opts = NULL) {
             // Add cells
             if ($export) {
                 $row[] = $member['contact']['cid'];
+                $row[] = $member['contact']['memberNumber'];
                 $row[] = $member['contact']['lastName'];
                 $row[] = $member['contact']['firstName'];
             } else {
+                $row[] = $member['contact']['memberNumber'];
                 $row[] = $name_link;
             }
-            $row[] = $plan;
-            $row[] = $member['contact']['email'];
-            $row[] = $member['contact']['phone'];
+            if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
+                $row[] = $member['contact']['joined'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array($plan, $opts['exclude'])) {
+                $row[] = $plan;
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
+                $row[] = $member['contact']['company'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('school', $opts['exclude'])) {
+                $row[] = $member['contact']['school'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('studentID', $opts['exclude'])) {
+                $row[] = $member['contact']['studentID'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('address1', $opts['exclude'])) {
+                $row[] = $member['contact']['address1'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('address2', $opts['exclude'])) {
+                $row[] = $member['contact']['address2'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('city', $opts['exclude'])) {
+                $row[] = $member['contact']['city'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('state', $opts['exclude'])) {
+                $row[] = $member['contact']['state'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('zip', $opts['exclude'])) {
+                $row[] = $member['contact']['zip'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('phone', $opts['exclude'])) {
+                $row[] = $member['contact']['phone'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('email', $opts['exclude'])) {
+                $row[] = $member['contact']['email'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('over18', $opts['exclude'])) {
+                $row[] = $member['contact']['over18'];
+            }
             if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
                 $row[] = $member['contact']['emergencyName'];
             }
+            if (!array_key_exists('exclude', $opts) || !in_array('emergencyRelation', $opts['exclude'])) {
+                $row[] = $member['contact']['emergencyRelation'];
+            }
             if (!array_key_exists('exclude', $opts) || !in_array('emergencyPhone', $opts['exclude'])) {
                 $row[] = $member['contact']['emergencyPhone'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
+                $row[] = $member['contact']['emergencyEmail'];
             }
         }
         
