@@ -74,12 +74,25 @@ function command_member_add () {
     
     // Build contact object
     $contact = array(
-        'firstName' => $_POST['firstName']
+        'memberNumber' => $_POST['memberNumber']
+        , 'firstName' => $_POST['firstName']
         , 'lastName' => $_POST['lastName']
+        , 'joined' => $_POST['joined']
+        , 'company' => $_POST['company']
+        , 'school' => $_POST['school']
+        , 'studentID' => $_POST['studentID']
+        , 'address1' => $_POST['address1']
+        , 'address2' => $_POST['address2']
+        , 'city' => $_POST['city']
+        , 'state' => $_POST['state']
+        , 'zip' => $_POST['zip']
         , 'email' => $_POST['email']
         , 'phone' => $_POST['phone']
+        , 'over18' => $_POST['over18']
         , 'emergencyName' => $_POST['emergencyName']
+        , 'emergencyRelation' => $_POST['emergencyRelation']
         , 'emergencyPhone' => $_POST['emergencyPhone']
+        , 'emergencyEmail' => $_POST['emergencyEmail']
     );
     // Add user fields
     $user = array('username' => $username);
@@ -402,17 +415,30 @@ function command_member_import () {
         }
         
         // Add contact
+        $memberNumber = mysql_real_escape_string($row['memberNumber']);
         $firstName = mysql_real_escape_string($row['firstname']);
         $lastName = mysql_real_escape_string($row['lastname']);
+        $joined = mysql_real_escape_string($row['joined']);
+        $company = mysql_real_escape_string($row['company']);
+        $school = mysql_real_escape_string($row['school']);
+        $studentID = mysql_real_escape_string($row['studentID']);
+        $address1 = mysql_real_escape_string($row['address1']);
+        $address2 = mysql_real_escape_string($row['address2']);
+        $city = mysql_real_escape_string($row['city']);
+        $state = mysql_real_escape_string($row['state']);
+        $zip = mysql_real_escape_string($row['zip']);
         $email = mysql_real_escape_string($row['email']);
         $phone = mysql_real_escape_string($row['phone']);
-        $emergencyName = mysql_real_escape_string($row['emergencyname']);
-        $emergencyPhone = mysql_real_escape_string($row['emergencyphone']);
+        $over18 = mysql_real_escape_string($row['over18']);
+        $emergencyName = mysql_real_escape_string($row['emergencyName']);
+        $emergencyRelation = mysql_real_escape_string($row['emergencyRelation']);
+        $emergencyPhone = mysql_real_escape_string($row['emergencyPhone']);
+        $emergencyEmail = mysql_real_escape_string($row['emergencyEmail']);
         $sql = "
             INSERT INTO `contact`
-            (`firstName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
+            (`memberNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`)
             VALUES
-            ('$firstName','$lastName','$email','$phone','$emergencyName','$emergencyPhone')";
+            ('$memberNumber','$firstName','$lastName','$joined','$company','$school','$studentID','$address1','$address2','$city','$state','$zip','$email','$phone','$over18','$emergencyName','$emergencyRelation','$emergencyPhone','$emergencyEmail')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $cid = mysql_insert_id();
