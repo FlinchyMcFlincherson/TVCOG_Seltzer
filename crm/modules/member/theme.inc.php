@@ -320,9 +320,24 @@ function theme_member_created_email ($cid) {
     $plan = $data[0]['plan']['name'];
     
     $output = "<p>Contact info:<br/>\n";
+    $output .= "Member #: $contact[memberNumber]<br/>\n";
     $output .= "Name: $name<br/>\n";
+    $output .= "Joined: $contact[joined]<br/>\n";
+    $output .= "Company: $contact[company]<br/>\n";
+    $output .= "School: $contact[school]<br/>\n";
+    $output .= "Student ID#: $contact[studentID]<br/>\n";
+    $output .= "Address Line 1: $contact[address1]<br/>\n";
+    $output .= "Address Line 2: $contact[address2]<br/>\n";
+    $output .= "City: $contact[city]<br/>\n";
+    $output .= "State: $contact[state]<br/>\n";
+    $output .= "ZIP: $contact[zip]<br/>\n";
     $output .= "Email: $contact[email]<br/>\n";
     $output .= "Phone: $contact[phone]\n</p>\n";
+    $output .= "Over 18?: $contact[over18]<br/>\n";
+    $output .= "Emergency Contact: $contact[emergencyContact]<br/>\n";
+    $output .= "Emergency Contact Relation: $contact[emergencyRelation]<br/>\n";
+    $output .= "Emergency Contact Phone: $contact[emergencyPhone]<br/>\n";
+    $output .= "Emergency Contact Email: $contact[emergencyEmail]<br/>\n";
     $output .= "<p>Membership info:<br/>\n";
     $output .= "Plan: $plan<br/>\n";
     $output .= "Start date: $date\n</p>\n";
