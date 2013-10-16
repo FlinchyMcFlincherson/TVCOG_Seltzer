@@ -307,24 +307,62 @@ function contact_table ($opts = array()) {
     $table['columns'] = array();
     if ($export) {
         $table['columns'][] = array('title'=>'Contact ID','class'=>'');
+        $table['columns'][] = array('title'=>'Member #','class'=>'');
         $table['columns'][] = array('title'=>'Last','class'=>'');
         $table['columns'][] = array('title'=>'First','class'=>'');
     } else {
+        if (!array_key_exists('exclude', $opts) || !in_array('memberNumber', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Mem #','class'=>'');
+        }
         $table['columns'][] = array('title'=>'Name','class'=>'');
     }
-    $table['columns'][] = array('title'=>'E-Mail','class'=>'');
-    $table['columns'][] = array('title'=>'Phone','class'=>'');
+    if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Joined','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Company','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('school', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'School','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('studentID', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Student ID #','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('address1', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Address Line 1','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('address2', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Address Line 2','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('city', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'City','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('state', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'State','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('zip', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'ZIP','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('phone', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Phone','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('email', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Email','class'=>'');
+    }
+    if (!array_key_exists('exclude', $opts) || !in_array('over18', $opts['exclude'])) {
+        $table['columns'][] = array('title'=>'Over 18?','class'=>'');
+    }
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
         $table['columns'][] = array('title'=>'Emergency Contact','class'=>'');
     }
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyRelation', $opts['exclude'])) {
-        $table['columns'][] = array('title'=>'Emergency Contact Relation','class'=>'');
+        $table['columns'][] = array('title'=>'E.C. Relation','class'=>'');
     }
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyPhone', $opts['exclude'])) {
-        $table['columns'][] = array('title'=>'Emergency Phone','class'=>'');
+        $table['columns'][] = array('title'=>'E.C. Phone','class'=>'');
     }
     if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
-        $table['columns'][] = array('title'=>'Emergency Email','class'=>'');
+        $table['columns'][] = array('title'=>'E.C. Email','class'=>'');
     }
     // Add ops column
     if ($show_ops && !$export && (user_access('contact_edit') || user_access('contact_delete'))) {
@@ -333,7 +371,6 @@ function contact_table ($opts = array()) {
     // Loop through contact data and add rows to the table
     $table['rows'] = array();
     foreach ($contact_data as $contact) {
-        
         $row = array();
         // Construct name
         $name_link = theme('contact_name', $contact, true);
@@ -341,13 +378,51 @@ function contact_table ($opts = array()) {
         // Add cells
         if ($export) {
             $row[] = $contact['cid'];
+            $row[] = $contact['memberNumber'];
             $row[] = $contact['lastName'];
             $row[] = $contact['firstName'];
         } else {
+            if (!array_key_exists('exclude', $opts) || !in_array('memberNumber', $opts['exclude'])) {
+                $row[] = $contact['memberNumber'];
+            }
             $row[] = $name_link;
         }
-        $row[] = $contact['email'];
-        $row[] = $contact['phone'];
+        if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
+            $row[] = $contact['joined'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
+            $row[] = $contact['company'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('school', $opts['exclude'])) {
+            $row[] = $contact['school'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('studentID', $opts['exclude'])) {
+            $row[] = $contact['studentID'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('address1', $opts['exclude'])) {
+            $row[] = $contact['address1'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('address2', $opts['exclude'])) {
+            $row[] = $contact['address2'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('city', $opts['exclude'])) {
+            $row[] = $contact['city'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('state', $opts['exclude'])) {
+            $row[] = $contact['state'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('zip', $opts['exclude'])) {
+            $row[] = $contact['zip'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('phone', $opts['exclude'])) {
+            $row[] = $contact['phone'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('email', $opts['exclude'])) {
+            $row[] = $contact['email'];
+        }
+        if (!array_key_exists('exclude', $opts) || !in_array('over18', $opts['exclude'])) {
+            $row[] = $contact['over18'];
+        }
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyName', $opts['exclude'])) {
             $row[] = $contact['emergencyName'];
         }
@@ -705,7 +780,43 @@ function contact_page (&$page_data, $page_name) {
             if (user_access('contact_view')) {
                 $opts = array(
                     'show_export'=>true
-                    , 'exclude'=>array('emergencyName', 'emergencyRelation', 'emergencyPhone', 'emergencyEmail')
+                    //Fields displayed in the contact "view contacts" table can be hidden or revealed by commenting out elements and their corresponding
+                    //commas in this array (yes, this is ghetto as hell and I know it)
+                    , 'exclude'=>array(
+                        'memberNumber'
+                        , 
+                        'joined'
+                        ,
+                        //'company'
+                        //,
+                        //'school' 
+                        //,
+                        'studentID'
+                        ,
+                        'address1' 
+                        ,
+                        'address2' 
+                        ,
+                        'city'
+                        ,
+                        'state' 
+                        ,
+                        'zip'
+                        ,
+                        //'phone'
+                        //,
+                        //'email'
+                        //,
+                        'over18'
+                        ,
+                        'emergencyName'
+                        ,
+                        'emergencyRelation'
+                        ,
+                        'emergencyPhone'
+                        ,
+                        'emergencyEmail'
+                        )
                 );
                 $view = theme('table', 'contact', $opts);
                 page_add_content_top($page_data, $view, 'View');
