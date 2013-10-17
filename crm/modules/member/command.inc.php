@@ -75,6 +75,7 @@ function command_member_add () {
     // Build contact object
     $contact = array(
         'memberNumber' => $_POST['memberNumber']
+        , 'parentNumber' => $_POST['parentNumber']
         , 'firstName' => $_POST['firstName']
         , 'lastName' => $_POST['lastName']
         , 'joined' => $_POST['joined']
@@ -93,6 +94,7 @@ function command_member_add () {
         , 'emergencyRelation' => $_POST['emergencyRelation']
         , 'emergencyPhone' => $_POST['emergencyPhone']
         , 'emergencyEmail' => $_POST['emergencyEmail']
+        , 'notes' => $_POST['notes']
     );
     // Add user fields
     $user = array('username' => $username);
@@ -416,6 +418,7 @@ function command_member_import () {
         
         // Add contact
         $memberNumber = mysql_real_escape_string($row['memberNumber']);
+        $parentNumber = mysql_real_escape_string($row['parentNumber']);
         $firstName = mysql_real_escape_string($row['firstname']);
         $lastName = mysql_real_escape_string($row['lastname']);
         $joined = mysql_real_escape_string($row['joined']);
@@ -434,11 +437,12 @@ function command_member_import () {
         $emergencyRelation = mysql_real_escape_string($row['emergencyRelation']);
         $emergencyPhone = mysql_real_escape_string($row['emergencyPhone']);
         $emergencyEmail = mysql_real_escape_string($row['emergencyEmail']);
+        $notes = mysql_real_escape_string($row['notes']);
         $sql = "
             INSERT INTO `contact`
-            (`memberNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`)
+            (`memberNumber`,`parentNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`,`notes`)
             VALUES
-            ('$memberNumber','$firstName','$lastName','$joined','$company','$school','$studentID','$address1','$address2','$city','$state','$zip','$email','$phone','$over18','$emergencyName','$emergencyRelation','$emergencyPhone','$emergencyEmail')";
+            ('$memberNumber','$parentNumber', $firstName','$lastName','$joined','$company','$school','$studentID','$address1','$address2','$city','$state','$zip','$email','$phone','$over18','$emergencyName','$emergencyRelation','$emergencyPhone','$emergencyEmail','$notes')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $cid = mysql_insert_id();
@@ -450,6 +454,16 @@ function command_member_import () {
             (`cid`)
             VALUES
             ('$esc_cid')";
+        $res = mysql_query($sql);
+        if (!$res) crm_error(mysql_error());
+
+        // Add RFID
+        $esc_RFID = mysql_real_escape_string($row['RFID']);
+        $sql = "
+            INSERT INTO `key`
+            (`cid`,`serial`)
+            VALUES
+            ('$esc_cid','$esc_RFID')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         
@@ -502,7 +516,7 @@ function command_member_import () {
             $res = mysql_query($sql);
             if (!$res) crm_error(mysql_error());
         }
-        
+
         // Add plan if necessary
         $esc_plan_name = mysql_real_escape_string($row['plan']);
         $sql = "SELECT `pid` FROM `plan` WHERE `name`='$esc_plan_name'";
@@ -525,13 +539,14 @@ function command_member_import () {
         
         // Add membership
         $esc_start = mysql_real_escape_string($row['startdate']);
+        $esc_end = mysql_real_escape_string($row['enddate']);
         $esc_pid = mysql_real_escape_string($pid);
         
         $sql = "
             INSERT INTO `membership`
-            (`cid`, `pid`, `start`)
+            (`cid`, `pid`, `start`, `end`)
             VALUES
-            ('$esc_cid', '$esc_pid', '$esc_start')
+            ('$esc_cid', '$esc_pid', '$esc_start', '$esc_end')
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
@@ -559,9 +574,9 @@ function command_member_import () {
         }
         
         // Notify user
-        $confirm_url = user_reset_password_url($user['username']);
-        $content = theme('member_welcome_email', $user['cid'], $confirm_url);
-        mail($email, "Welcome to $config_org_name", $content, $headers);
+        //$confirm_url = user_reset_password_url($user['username']);
+        //$content = theme('member_welcome_email', $user['cid'], $confirm_url);
+        //mail($email, "Welcome to $config_org_name", $content, $headers);
     }
     
     return crm_url('members');

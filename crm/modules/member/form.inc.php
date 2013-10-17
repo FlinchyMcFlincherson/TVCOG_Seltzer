@@ -567,7 +567,7 @@ function member_import_form () {
         , 'fields' => array(
             array(
                 'type' => 'message'
-                , 'value' => '<p>To import members, upload a csv.  The csv should have a header row with the following fields:</p><ul><li>Member Number</li><li>First Name</li><li>Last Name</li><li>Joined</li><li>Company</li><li>School</li><li>Student ID</li><li>Address Line 1</li><li>Address Line 2</li><li>City</li><li>State</li><li>Zip</li><li>Email</li><li>Phone</li><li>Over 18? (Set to 1/0 signalling Y/N)</li><li>Emergency Contact Name</li><li>Emergency Contact Relation</li><li>Emergency Contact Phone</li><li>Emergency Contact Email</li><li>Username</li><li>Plan</li><li>Start Date</li></ul>'
+                , 'value' => '<p>To import members, upload a csv.  The csv should have a header row with the following fields:</p><ul><li>Member Number</li><li>Parent Member Number</li><li>First Name</li><li>Last Name</li><li>Joined</li><li>Company</li><li>School</li><li>Student ID</li><li>Address Line 1</li><li>Address Line 2</li><li>City</li><li>State</li><li>Zip</li><li>Email</li><li>Phone</li><li>Over 18? (Set to 1/0 signalling Y/N)</li><li>Emergency Contact Name</li><li>Emergency Contact Relation</li><li>Emergency Contact Phone</li><li>Emergency Contact Email</li><li>Notes</li><li>Username</li><li>RFID</li><li>Plan</li><li>Start Date</li><li>End Date</li></ul>'
             )
             , array(
                 'type' => 'file'

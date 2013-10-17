@@ -33,7 +33,8 @@ function member_data ($opts = array()) {
     // Query database
     $sql = "
         SELECT
-        `member`.`cid`, `memberNumber`, `firstName`, `lastName`, `joined`, `company`, `school`, `studentID`, `address1`, `address2`, `city`, `state`, `zip`, `email`, `phone`, `over18`, `emergencyName`, `emergencyRelation`, `emergencyPhone`, `emergencyEmail`,
+        `member`.`cid`, `memberNumber`, `parentNumber`, `firstName`, `lastName`, `joined`, `company`, `school`, `studentID`, `address1`, `address2`, 
+        `city`, `state`, `zip`, `email`, `phone`, `over18`, `emergencyName`, `emergencyRelation`, `emergencyPhone`, `emergencyEmail`, `notes`,
         `username`, `hash`
         FROM `member`
         LEFT JOIN `contact` ON `member`.`cid`=`contact`.`cid`
@@ -84,6 +85,7 @@ function member_data ($opts = array()) {
             'contact' => array(
                 'cid' => $row['cid'],
                 'memberNumber' => $row['memberNumber'],
+                'parentNumber' => $row['parentNumber'],
                 'firstName' => $row['firstName'],
                 'lastName' => $row['lastName'],
                 'joined' => $row['joined'],
@@ -101,7 +103,8 @@ function member_data ($opts = array()) {
                 'emergencyName' => $row['emergencyName'],
                 'emergencyRelation' => $row['emergencyRelation'],
                 'emergencyPhone' => $row['emergencyPhone'],
-                'emergencyEmail' => $row['emergencyEmail']
+                'emergencyEmail' => $row['emergencyEmail'],
+                'notes' => $row['notes']
             ),
             'user' => array(
                 'cid' => $row['cid'],

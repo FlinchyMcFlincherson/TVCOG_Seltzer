@@ -63,6 +63,8 @@ function member_page (&$page_data, $page_name, $options) {
                     //Fields displayed in the contact "view members" table can be hidden or revealed by commenting out elements and their corresponding 
                     //commas in this array (yes, this is ghetto as hell and I know it)
                     , 'exclude'=>array(
+                        //'parentNumber'
+                        //,
                         //'joined'
                         //,
                         //$plan
@@ -96,6 +98,8 @@ function member_page (&$page_data, $page_name, $options) {
                         'emergencyPhone'
                         ,
                         'emergencyEmail'
+                        ,
+                        'notes'
                         )
                 );
                 $view .= theme('table', 'member', $opts);

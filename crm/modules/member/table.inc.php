@@ -63,6 +63,7 @@ function member_table ($opts = NULL) {
             $table['columns'][] = array('title'=>'First','class'=>'');
         } else {
             $table['columns'][] = array('title'=>'Mem #','class'=>'');
+            $table['columns'][] = array('title'=>'Parent #','class'=>'');
             $table['columns'][] = array('title'=>'Name','class'=>'');
         }
         if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
@@ -116,6 +117,9 @@ function member_table ($opts = NULL) {
         if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'E.C. Email','class'=>'');
         }
+        if (!array_key_exists('exclude', $opts) || !in_array('notes', $opts['exclude'])) {
+            $table['columns'][] = array('title'=>'Notes','class'=>'');
+        }
     }
     // Add ops column
     if (!$export && (user_access('member_edit') || user_access('member_delete'))) {
@@ -143,10 +147,12 @@ function member_table ($opts = NULL) {
             if ($export) {
                 $row[] = $member['contact']['cid'];
                 $row[] = $member['contact']['memberNumber'];
+                $row[] = $member['contact']['parentNumber'];
                 $row[] = $member['contact']['lastName'];
                 $row[] = $member['contact']['firstName'];
             } else {
                 $row[] = $member['contact']['memberNumber'];
+                $row[] = $member['contact']['parentNumber'];
                 $row[] = $name_link;
             }
             if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
@@ -199,6 +205,9 @@ function member_table ($opts = NULL) {
             }
             if (!array_key_exists('exclude', $opts) || !in_array('emergencyEmail', $opts['exclude'])) {
                 $row[] = $member['contact']['emergencyEmail'];
+            }
+            if (!array_key_exists('exclude', $opts) || !in_array('notes', $opts['exclude'])) {
+                $row[] = $member['contact']['notes'];
             }
         }
         

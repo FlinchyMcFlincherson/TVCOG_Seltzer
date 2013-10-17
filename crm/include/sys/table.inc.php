@@ -77,7 +77,14 @@ function theme_table ($table_id, $opts = NULL) {
     if (!empty($table['id'])) {
         $output .= ' id="' . $table['id'] . '"';
     }
-    $class = "seltzer-table";
+
+    //If Contacts or Members table is being themed, use "Bigtable" class
+    if ($table_id === "member" || $table_id === "contact") {
+        $class = "bigtable";
+    } else {
+        $class = "seltzer-table";    
+    }
+    
     if (!empty($table['class'])) {
         $class .= ' ' . $table['class'];
     }
@@ -97,9 +104,9 @@ function theme_table ($table_id, $opts = NULL) {
         if (!empty($col['class'])) {
             $output .= ' class="' . $col['class'] . '"';
         }
-        $output .= '>';
+        $output .= '><span style="padding-right:15px">';
         $output .= array_key_exists('title', $col) ? $col['title'] : '';
-        $output .= '</th>';
+        $output .= '</span></th>';
     }
     $output .= "</tr>";
     if ($opts['show_export']) {
@@ -141,12 +148,6 @@ function theme_table ($table_id, $opts = NULL) {
         }
         
         $output .= '</tr>';
-    }
-    
-    if ($opts['show_export']) {
-        $output .= '<tr class="subhead"><td colspan="' . $column_count . '">';
-        $output .= $row_count . ' results, export: <a href="' . $export . '">csv</a>';
-        $output .= "</td></tr>";
     }
     
     $output .= "</tbody>";
