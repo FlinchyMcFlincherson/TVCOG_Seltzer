@@ -321,6 +321,7 @@ function theme_member_created_email ($cid) {
     
     $output = "<p>Contact info:<br/>\n";
     $output .= "Member #: $contact[memberNumber]<br/>\n";
+    $output .= "Parent Member #: $contact[parentNumber]<br/>\n";
     $output .= "Name: $name<br/>\n";
     $output .= "Joined: $contact[joined]<br/>\n";
     $output .= "Company: $contact[company]<br/>\n";
@@ -338,6 +339,7 @@ function theme_member_created_email ($cid) {
     $output .= "Emergency Contact Relation: $contact[emergencyRelation]<br/>\n";
     $output .= "Emergency Contact Phone: $contact[emergencyPhone]<br/>\n";
     $output .= "Emergency Contact Email: $contact[emergencyEmail]<br/>\n";
+    $output .= "Notes: $contact[notes]<br/>\n";
     $output .= "<p>Membership info:<br/>\n";
     $output .= "Plan: $plan<br/>\n";
     $output .= "Start date: $date\n</p>\n";

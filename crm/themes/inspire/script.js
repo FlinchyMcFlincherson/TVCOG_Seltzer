@@ -1,6 +1,6 @@
 /*
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
-    
+
     This file is part of the Seltzer CRM Project
     script.js - General javascript code
 
@@ -33,22 +33,25 @@ var httpGet = {};
 
 // Add datepicker to necessary fields
 $(document).ready(function () {
-    
+
     // Enable date picker
     $('input.date').datepicker({"dateFormat" : "yy-mm-dd"});
-    
+
     // Set up tabbing
     showTab();
     $('ul.page-nav li a').click(function () {
         showTab($(this).attr('href'));
         return false;
     });
-    
+
     // Set up autocomplete forms
     initAutocomplete();
-    
+
     // Enable focusing
     $('.focus').focus();
+
+    // Pimp tables
+    $('table.bigtable').addClass('tablesorter').tablesorter();
 });
 
 var showTab = function (hash) {
