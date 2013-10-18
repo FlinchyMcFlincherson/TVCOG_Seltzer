@@ -419,8 +419,8 @@ function command_member_import () {
         // Add contact
         $memberNumber = mysql_real_escape_string($row['memberNumber']);
         $parentNumber = mysql_real_escape_string($row['parentNumber']);
-        $firstName = mysql_real_escape_string($row['firstname']);
-        $lastName = mysql_real_escape_string($row['lastname']);
+        $firstName = mysql_real_escape_string($row['firstName']);
+        $lastName = mysql_real_escape_string($row['lastName']);
         $joined = mysql_real_escape_string($row['joined']);
         $company = mysql_real_escape_string($row['company']);
         $school = mysql_real_escape_string($row['school']);
@@ -440,9 +440,50 @@ function command_member_import () {
         $notes = mysql_real_escape_string($row['notes']);
         $sql = "
             INSERT INTO `contact`
-            (`memberNumber`,`parentNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`,`notes`)
+                (`memberNumber`
+                ,`parentNumber`
+                ,`firstName`
+                ,`lastName`
+                ,`joined`
+                ,`company`
+                ,`school`
+                ,`studentID`
+                ,`address1`
+                ,`address2`
+                ,`city`
+                ,`state`
+                ,`zip`
+                ,`email`
+                ,`phone`
+                ,`over18`
+                ,`emergencyName`
+                ,`emergencyRelation`
+                ,`emergencyPhone`
+                ,`emergencyEmail`
+                ,`notes`)
             VALUES
-            ('$memberNumber','$parentNumber', $firstName','$lastName','$joined','$company','$school','$studentID','$address1','$address2','$city','$state','$zip','$email','$phone','$over18','$emergencyName','$emergencyRelation','$emergencyPhone','$emergencyEmail','$notes')";
+                ('$memberNumber'
+                ,'$parentNumber'
+                , $firstName'
+                ,'$lastName'
+                ,'$joined'
+                ,'$company'
+                ,'$school'
+                ,'$studentID'
+                ,'$address1'
+                ,'$address2'
+                ,'$city'
+                ,'$state'
+                ,'$zip'
+                ,'$email'
+                ,'$phone'
+                ,'$over18'
+                ,'$emergencyName'
+                ,'$emergencyRelation'
+                ,'$emergencyPhone'
+                ,'$emergencyEmail'
+                ,'$notes')";
+
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $cid = mysql_insert_id();
@@ -574,9 +615,9 @@ function command_member_import () {
         }
         
         // Notify user
-        //$confirm_url = user_reset_password_url($user['username']);
-        //$content = theme('member_welcome_email', $user['cid'], $confirm_url);
-        //mail($email, "Welcome to $config_org_name", $content, $headers);
+        /*$confirm_url = user_reset_password_url($user['username']);
+        $content = theme('member_welcome_email', $user['cid'], $confirm_url);
+        mail($email, "Welcome to $config_org_name", $content, $headers);*/
     }
     
     return crm_url('members');
