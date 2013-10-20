@@ -79,7 +79,7 @@ function theme_table ($table_id, $opts = NULL) {
     }
 
     //If Contacts or Members table is being themed, use "Bigtable" class
-    if ($table_id === "member" || $table_id === "contact") {
+    if ($table_id === "member" || $table_id === "contact" || $table_id === "key") {
         $class = "bigtable";
     } else {
         $class = "seltzer-table";    
