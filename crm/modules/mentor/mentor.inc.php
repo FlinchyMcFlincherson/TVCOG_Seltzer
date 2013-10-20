@@ -635,7 +635,6 @@ function command_mentor_update() {
     }
     $sql .= "
         `serial`='$esc_post[serial]',
-        `slot`='$esc_post[slot]'
         WHERE `kid`='$esc_post[kid]'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());

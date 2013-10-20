@@ -55,7 +55,6 @@ function key_install($old_revision = 0) {
               `start` date DEFAULT NULL,
               `end` date DEFAULT NULL,
               `serial` varchar(255) NOT NULL,
-              `slot` mediumint(8) unsigned NOT NULL,
               PRIMARY KEY (`kid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
@@ -138,7 +137,6 @@ function key_data ($opts = array()) {
         , `start`
         , `end`
         , `serial`
-        , `slot`
         FROM `key`
         WHERE 1";
     if (!empty($opts['kid'])) {
@@ -179,7 +177,7 @@ function key_data ($opts = array()) {
     $keys = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
-        // Contents of row are kid, cid, start, end, serial, slot
+        // Contents of row are kid, cid, start, end, serial
         $keys[] = $row;
         $row = mysql_fetch_assoc($res);
     }
@@ -232,7 +230,7 @@ function key_data_alter ($type, $data = array(), $opts = array()) {
  */
 function key_save ($key) {
     // Escape values
-    $fields = array('kid', 'cid', 'serial', 'slot', 'start', 'end');
+    $fields = array('kid', 'cid', 'serial', 'start', 'end');
     if (isset($key['kid'])) {
         // Update existing key
         $kid = $key['kid'];
@@ -329,7 +327,6 @@ function key_table ($opts) {
     if (user_access('key_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Serial', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'Slot', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Start', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'End', 'class'=>'', 'id'=>'');
     }
@@ -345,7 +342,6 @@ function key_table ($opts) {
             // Add cells
             $row[] = theme('contact_name', $cid_to_contact[$key['cid']], true);
             $row[] = $key['serial'];
-            $row[] = $key['slot'];
             $row[] = $key['start'];
             $row[] = $key['end'];
         }
@@ -400,11 +396,6 @@ function key_add_form ($cid) {
                         'type' => 'text',
                         'label' => 'Serial',
                         'name' => 'serial'
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => 'Slot',
-                        'name' => 'slot'
                     ),
                     array(
                         'type' => 'text',
@@ -466,6 +457,12 @@ function key_edit_form ($kid) {
                 'label' => 'Edit Key Info',
                 'fields' => array(
                     array(
+                        'type' => 'text',
+                        'label' => 'Serial',
+                        'name' => 'serial',
+                        'value' => $key['serial']
+                    ),
+                    array(
                         'type' => 'readonly',
                         'label' => 'Name',
                         'value' => $name
@@ -483,18 +480,6 @@ function key_edit_form ($kid) {
                         'label' => 'End',
                         'name' => 'end',
                         'value' => $key['end']
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => 'Serial',
-                        'name' => 'serial',
-                        'value' => $key['serial']
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => 'Slot',
-                        'name' => 'slot',
-                        'value' => $key['slot']
                     ),
                     array(
                         'type' => 'submit',
@@ -526,7 +511,7 @@ function key_delete_form ($kid) {
     $key = $data[0];
     
     // Construct key name
-    $key_name = "key:$key[kid] serial:$key[serial] slot:$key[slot] $key[start] -- $key[end]";
+    $key_name = "key:$key[kid] serial:$key[serial] $key[start] -- $key[end]";
     
     // Create form structure
     $form = array(
