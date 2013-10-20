@@ -585,15 +585,16 @@ function member_import_form () {
                 <li>Email</li>
                 <li>Phone</li>
                 <li>Over 18 (Set to 1/0 signalling Y/N)</li>
-                <li>Emergency Contact Name</li>
+                <li>Emergency Contact</li>
                 <li>Emergency Relation</li>
                 <li>Emergency Phone</li>
                 <li>Emergency Email</li>
-                <li>Notes</li><li>Username</li>
+                <li>Notes</li>
+                <li>Username</li>
                 <li>RFID</li>
                 <li>Plan</li>
-                <li>Start</li>
-                <li>End</li>
+                <li>Start Date</li>
+                <li>End Date</li>
                 </ul>'
             )
             , array(

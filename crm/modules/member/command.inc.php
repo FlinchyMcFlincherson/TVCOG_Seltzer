@@ -1,4 +1,4 @@
-<?php 
+ <?php 
 
 /*
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
@@ -159,9 +159,9 @@ function command_member_add () {
     }
     
     // Notify user
-    $confirm_url = user_reset_password_url($contact['user']['username']);
+    /*$confirm_url = user_reset_password_url($contact['user']['username']);
     $content = theme('member_welcome_email', $contact['user']['cid'], $confirm_url);
-    mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);
+    mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);*/
     
     return crm_url("contact&cid=$esc_cid");
 }
@@ -417,14 +417,14 @@ function command_member_import () {
         }
         
         // Add contact
-        $memberNumber = mysql_real_escape_string($row['memberNumber']);
-        $parentNumber = mysql_real_escape_string($row['parentNumber']);
-        $firstName = mysql_real_escape_string($row['firstName']);
-        $lastName = mysql_real_escape_string($row['lastName']);
+        $memberNumber = mysql_real_escape_string($row['membernumber']);
+        $parentNumber = mysql_real_escape_string($row['parentnumber']);
+        $firstName = mysql_real_escape_string($row['firstname']);
+        $lastName = mysql_real_escape_string($row['lastname']);
         $joined = mysql_real_escape_string($row['joined']);
         $company = mysql_real_escape_string($row['company']);
         $school = mysql_real_escape_string($row['school']);
-        $studentID = mysql_real_escape_string($row['studentID']);
+        $studentID = mysql_real_escape_string($row['studentid']);
         $address1 = mysql_real_escape_string($row['address1']);
         $address2 = mysql_real_escape_string($row['address2']);
         $city = mysql_real_escape_string($row['city']);
@@ -432,11 +432,11 @@ function command_member_import () {
         $zip = mysql_real_escape_string($row['zip']);
         $email = mysql_real_escape_string($row['email']);
         $phone = mysql_real_escape_string($row['phone']);
-        $over18 = mysql_real_escape_string($row['over18']);
-        $emergencyName = mysql_real_escape_string($row['emergencyName']);
-        $emergencyRelation = mysql_real_escape_string($row['emergencyRelation']);
-        $emergencyPhone = mysql_real_escape_string($row['emergencyPhone']);
-        $emergencyEmail = mysql_real_escape_string($row['emergencyEmail']);
+        $over18 = intval($row['over18']);
+        $emergencyName = mysql_real_escape_string($row['emergencycontact']);
+        $emergencyRelation = mysql_real_escape_string($row['emergencyrelation']);
+        $emergencyPhone = mysql_real_escape_string($row['emergencyphone']);
+        $emergencyEmail = mysql_real_escape_string($row['emergencyemail']);
         $notes = mysql_real_escape_string($row['notes']);
         $sql = "
             INSERT INTO `contact`
@@ -464,7 +464,7 @@ function command_member_import () {
             VALUES
                 ('$memberNumber'
                 ,'$parentNumber'
-                , $firstName'
+                ,'$firstName'
                 ,'$lastName'
                 ,'$joined'
                 ,'$company'
@@ -499,7 +499,8 @@ function command_member_import () {
         if (!$res) crm_error(mysql_error());
 
         // Add RFID
-        $esc_RFID = mysql_real_escape_string($row['RFID']);
+        $RFID = $row['rfid'];
+        $esc_RFID = mysql_real_escape_string($RFID);
         $sql = "
             INSERT INTO `key`
             (`cid`,`serial`)
@@ -582,7 +583,6 @@ function command_member_import () {
         $esc_start = mysql_real_escape_string($row['startdate']);
         $esc_end = mysql_real_escape_string($row['enddate']);
         $esc_pid = mysql_real_escape_string($pid);
-        
         $sql = "
             INSERT INTO `membership`
             (`cid`, `pid`, `start`, `end`)
