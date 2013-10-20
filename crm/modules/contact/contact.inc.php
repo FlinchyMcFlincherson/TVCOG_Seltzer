@@ -616,6 +616,7 @@ function contact_form ($opts = array()) {
                 , 'class' => 'date'
                 , 'label' => 'Joined'
                 , 'name' => 'joined'
+                , 'value' => date("Y-m-d")
             )
             , array(
                 'type' => 'text'
