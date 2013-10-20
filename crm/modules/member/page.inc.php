@@ -85,10 +85,10 @@ function member_page (&$page_data, $page_name, $options) {
                         ,
                         'zip'
                         ,
-                        //'phone'
-                        //,
-                        //'email'
-                        //,
+                        'phone'
+                        ,
+                        'email'
+                        ,
                         'over18'
                         ,
                         'emergencyName'
