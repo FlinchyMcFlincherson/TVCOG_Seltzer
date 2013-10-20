@@ -58,11 +58,11 @@ function contact_install ($old_revision = 0) {
         $sql = '
             CREATE TABLE IF NOT EXISTS `contact` (
               `cid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-              `memberNumber` mediumint(8) unsigned NOT NULL,
-              `parentNumber` mediumint(8) unsigned NOT NULL,
+              `memberNumber` varchar(8) NULL,
+              `parentNumber` varchar(8) NULL,
               `firstName` varchar(255) NOT NULL,
               `lastName` varchar(255) NOT NULL,
-              `joined` date NOT NULL,
+              `joined` date DEFAULT NULL,
               `company` varchar(255) NOT NULL,
               `school` varchar(255) NOT NULL,
               `studentID` varchar(255) NOT NULL,
@@ -78,8 +78,13 @@ function contact_install ($old_revision = 0) {
               `emergencyRelation` varchar(255) NOT NULL,
               `emergencyPhone` varchar(16) NOT NULL,
               `emergencyEmail` varchar(255) NOT NULL,
-              `notes` varchar(255) NOT NULL,
-              PRIMARY KEY (`cid`)
+              `notes` varchar(255) NOT NULL,' .
+              /* TODO Add logging functionality
+              `created` datetime DEFAULT CURRENT_TIMESTAMP,
+              `createdBy` varchar(255) NOT NULL,
+              `modified` datetime ON UPDATE CURRENT_TIMESTAMP,
+              `modifiedBy` varchar(255) NOT NULL,*/
+              'PRIMARY KEY (`cid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
         $res = mysql_query($sql);
@@ -188,7 +193,28 @@ function contact_data ($opts = array()) {
  * Saves a contact.
  */
 function contact_save ($contact) {
-    $fields = array('cid', 'memberNumber', 'parentNumber', 'firstName', 'lastName', 'joined', 'company', 'school', 'studentID', 'address1', 'address2', 'city', 'state', 'zip', 'email', 'phone', 'over18', 'emergencyName', 'emergencyRelation', 'emergencyPhone', 'emergencyEmail', 'notes');
+    $fields = array('cid'
+                    , 'memberNumber'
+                    , 'parentNumber'
+                    , 'firstName'
+                    , 'lastName'
+                    , 'joined'
+                    , 'company'
+                    , 'school'
+                    , 'studentID'
+                    , 'address1'
+                    , 'address2'
+                    , 'city'
+                    , 'state'
+                    , 'zip'
+                    , 'email'
+                    , 'phone'
+                    , 'over18'
+                    , 'emergencyName'
+                    , 'emergencyRelation'
+                    , 'emergencyPhone'
+                    , 'emergencyEmail'
+                    , 'notes');
     $escaped = array();
     foreach ($fields as $field) {
         $escaped[$field] = mysql_real_escape_string($contact[$field]);
@@ -230,9 +256,49 @@ function contact_save ($contact) {
         // Add contact
         $sql = "
             INSERT INTO `contact`
-            (`memberNumber`,`parentNumber`,`firstName`,`lastName`,`joined`,`company`,`school`,`studentID`,`address1`,`address2`,`city`,`state`,`zip`,`email`,`phone`,`over18`,`emergencyName`,`emergencyRelation`,`emergencyPhone`,`emergencyEmail`,`notes`)
+                (`memberNumber`
+                ,`parentNumber`
+                ,`firstName`
+                ,`lastName`
+                ,`joined`
+                ,`company`
+                ,`school`
+                ,`studentID`
+                ,`address1`
+                ,`address2`
+                ,`city`
+                ,`state`
+                ,`zip`
+                ,`email`
+                ,`phone`
+                ,`over18`
+                ,`emergencyName`
+                ,`emergencyRelation`
+                ,`emergencyPhone`
+                ,`emergencyEmail`
+                ,`notes`)
             VALUES
-            ('$escaped[memberNumber]','$escaped[parentNumber]','$escaped[firstName]','$escaped[lastName]','$escaped[joined]','$escaped[company]','$escaped[school]','$escaped[studentID]','$escaped[address1]','$escaped[address2]','$escaped[city]','$escaped[state]','$escaped[zip]','$escaped[email]','$escaped[phone]','$escaped[over18]','$escaped[emergencyName]','$escaped[emergencyRelation]','$escaped[emergencyPhone]','$escaped[emergencyEmail]','$escaped[notes]')";
+                ('$escaped[memberNumber]'
+                ,'$escaped[parentNumber]'
+                ,'$escaped[firstName]'
+                ,'$escaped[lastName]'
+                ,'$escaped[joined]'
+                ,'$escaped[company]'
+                ,'$escaped[school]'
+                ,'$escaped[studentID]'
+                ,'$escaped[address1]'
+                ,'$escaped[address2]'
+                ,'$escaped[city]'
+                ,'$escaped[state]'
+                ,'$escaped[zip]'
+                ,'$escaped[email]'
+                ,'$escaped[phone]'
+                ,'$escaped[over18]'
+                ,'$escaped[emergencyName]'
+                ,'$escaped[emergencyRelation]'
+                ,'$escaped[emergencyPhone]'
+                ,'$escaped[emergencyEmail]'
+                ,'$escaped[notes]')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $contact['cid'] = mysql_insert_id();
