@@ -20,6 +20,7 @@
     along with Seltzer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 /**
  * Return a table structure representing members.
  *
@@ -69,9 +70,7 @@ function member_table ($opts = NULL) {
         if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'Joined','class'=>'');
         }
-        if (!array_key_exists('exclude', $opts) || !in_array($plan, $opts['exclude'])) {
-            $table['columns'][] = array('title'=>'Membership','class'=>'');
-        }        
+        $table['columns'][] = array('title'=>'Membership','class'=>'');
         if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'Company','class'=>'');
         }
@@ -139,10 +138,11 @@ function member_table ($opts = NULL) {
             // Construct membership info
             $recentMembership = end($member['membership']);
             $plan = '';
-            if (!empty($recentMembership) && empty($recentMembership['end'])) {
+            /*TODO implement logic accounting for the fact that we use the "end date"
+             of a membership to represent the "paid until" date in the old DB*/
+            if (!empty($recentMembership)) {
                 $plan = $recentMembership['plan']['name'];
-            }
-            
+            }          
             // Add cells
             if ($export) {
                 $row[] = $member['contact']['cid'];
@@ -158,9 +158,7 @@ function member_table ($opts = NULL) {
             if (!array_key_exists('exclude', $opts) || !in_array('joined', $opts['exclude'])) {
                 $row[] = $member['contact']['joined'];
             }
-            if (!array_key_exists('exclude', $opts) || !in_array($plan, $opts['exclude'])) {
-                $row[] = $plan;
-            }
+            $row[] = $plan;
             if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
                 $row[] = $member['contact']['company'];
             }
