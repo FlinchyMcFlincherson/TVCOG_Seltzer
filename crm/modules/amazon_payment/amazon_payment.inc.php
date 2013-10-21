@@ -25,7 +25,7 @@
  * this number.
  */
 function amazon_payment_revision () {
-    return 1;
+    return 2;
 }
 
 /**
@@ -59,6 +59,15 @@ function amazon_payment_install($old_revision = 0) {
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
     }
+    
+    if ($old_revision < 2) {
+        $sql = '
+        ALTER TABLE `contact_amazon` DROP PRIMARY KEY, ADD PRIMARY KEY(`cid`);
+        ';
+        $res = mysql_query($sql);
+        if (!$res) crm_error(mysql_error());
+    }
+
 }
 
 // DB to Object mapping ////////////////////////////////////////////////////////
@@ -155,7 +164,7 @@ function amazon_payment_contact_save ($contact) {
     $esc_name = mysql_real_escape_string($contact['amazon_name']);
     $esc_cid = mysql_real_escape_string($contact['cid']);    
     // Check whether the amazon contact already exists in the database
-    $sql = "SELECT * FROM `contact_amazon` WHERE `amazon_name` = '$esc_name'";
+    $sql = "SELECT * FROM `contact_amazon` WHERE `cid` = '$esc_cid'";
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     $row = mysql_fetch_assoc($res);
@@ -164,8 +173,8 @@ function amazon_payment_contact_save ($contact) {
         if (isset($contact['cid'])) {
             $sql = "
                 UPDATE `contact_amazon`
-                SET `cid`='$esc_cid'
-                WHERE `amazon_name`='$esc_name'
+                SET `amazon_name`='$esc_name'
+                WHERE `cid`='$esc_cid'
             ";
             $res = mysql_query($sql);
             if (!$res) crm_error(mysql_error());
@@ -174,7 +183,7 @@ function amazon_payment_contact_save ($contact) {
         // Name is not in database, insert new
         $sql = "
             INSERT INTO `contact_amazon`
-            (`amazon_name`, `cid`) VALUES ('$esc_name', '$esc_cid')";
+            (`cid`, `amazon_name`) VALUES ('$esc_cid', '$esc_name')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
     }
@@ -297,10 +306,12 @@ function amazon_payment_contact_table ($opts) {
             // Construct ops array
             $ops = array();
             // Add edit op
-            // TODO
+            if (user_access('payment_edit')) {
+                $ops[] = '<a href=' . crm_url('amazon_payment_contact&cid=' . $contact['cid'] . '#tab-edit') . '>edit</a>';
+            }
             // Add delete op
             if (user_access('payment_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=amazon_payment_contact&id=' . $contact['cid']) . '>delete</a>';
+                $ops[] = '<a href=' . crm_url('delete&type=amazon_payment_contact&cid=' . $contact['cid']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -335,15 +346,21 @@ function amazon_payment_page (&$page_data, $page_name, $options) {
             page_add_content_top($page_data, theme('table', 'amazon_payment_contact', array('show_export'=>true)), 'View');
             page_add_content_top($page_data, theme('form', crm_get_form('amazon_payment_contact_add')), 'Add');
             break;
-        case 'contact':
-            if (user_access('payment_view') || $_GET['cid'] == user_id()) {
-                page_add_content_bottom($page_data, theme('amazon_payment_account_info', $_GET['cid']), 'Account');
+        case 'amazon_payment_contact':
+            // Capture amazon contact id
+            $cid = $options['cid'];
+            if (empty($cid)) {
+                return;
             }
-            if (function_exists('billing_revision')) {
-                if (user_access('payment_view') || $_GET['cid'] == user_id()) {
-                    page_add_content_bottom($page_data, theme('amazon_payment_first_month', $_GET['cid']), 'Plan');
-                }
+            
+            // Set page title
+            page_set_title($page_data, 'Administer Amazon Contact');
+            
+            // Add edit tab
+            if (user_access('payment_edit') || $_GET['cid'] == user_id()) {
+                page_add_content_top($page_data, theme('form', crm_get_form('amazon_payment_contact_edit', $cid)), 'Edit');
             }
+            
             break;
     }
 }
@@ -406,18 +423,73 @@ function amazon_payment_contact_add_form () {
                 'fields' => array(
                     array(
                         'type' => 'text',
-                        'label' => 'Amazon Name',
-                        'name' => 'amazon_name'
-                    ),
-                    array(
-                        'type' => 'text',
                         'label' => "Member's Name",
                         'name' => 'cid',
                         'autocomplete' => 'contact_name'
                     ),
                     array(
+                        'type' => 'text',
+                        'label' => 'Amazon Name',
+                        'name' => 'amazon_name'
+                    ),
+                    array(
                         'type' => 'submit',
                         'value' => 'Add'
+                    )
+                )
+            )
+        )
+    );
+    
+    return $form;
+}
+
+/**
+ * Return the form structure for the edit amazon contact form.
+ *
+ * @param The cid of the contact to edit an amazon contact for.
+ * @return The form structure.
+*/
+function amazon_payment_contact_edit_form ($cid) {
+    
+    // Ensure user is allowed to edit amazon contacts
+    if (!user_access('payment_edit')) {
+        return crm_url('amazon-admin');
+    }
+    
+     // Get amazon contact data
+    $data = crm_get_data('amazon_payment_contact', array('cid'=>$cid));
+    $amazon_payment_contact = $data[0];
+    
+    $contactName = theme('contact_name', $amazon_payment_contact['cid'], true);
+    // Create form structure
+    $form = array(
+        'type' => 'form',
+        'method' => 'post',
+        'command' => 'amazon_payment_contact_edit',
+        'hidden' => array(
+            'cid' => $amazon_payment_contact['cid']
+        ),
+        'fields' => array(
+            array(
+                'type' => 'fieldset',
+                'label' => 'Edit Amazon Contact',
+                'fields' => array(
+                    
+                    array(
+                        'type' => 'readonly',
+                        'label' => "Member's Name",
+                        'name' => 'name',
+                        'value' => $contactName
+                    ),array(
+                        'type' => 'text',
+                        'label' => 'Amazon Name',
+                        'name' => 'amazon_name',
+                        'value' => $amazon_payment_contact['amazon_name']
+                    ),
+                    array(
+                        'type' => 'submit',
+                        'value' => 'Update'
                     )
                 )
             )
@@ -627,10 +699,28 @@ function command_amazon_payment_import () {
 }
 
 /**
+ * Delete an amazon contact.
+ * @param $amazon_payment_contact The amazon_payment_contact data structure to delete, must have a 'cid' element.
+ */
+function command_amazon_payment_contact_delete () {
+    amazon_payment_contact_delete($_POST);
+    return crm_url('amazon-admin');
+}
+
+/**
  * Add an amazon contact.
  * @return The url to display on completion.
  */
 function command_amazon_payment_contact_add () {
+    amazon_payment_contact_save($_POST);
+    return crm_url('amazon-admin');
+}
+
+/**
+ * Edit an amazon contact.
+ * @return The url to display on completion.
+ */
+function command_amazon_payment_contact_edit (){
     amazon_payment_contact_save($_POST);
     return crm_url('amazon-admin');
 }
@@ -674,63 +764,6 @@ function command_amazon_payment_email () {
  */
 function theme_amazon_payment_admin () {
     return '<p><a href=' . crm_url('amazon-admin') . '>Administer</a></p>';
-}
-
-/**
- * Return themed html for prorated first month button.
- */
-function theme_amazon_payment_first_month ($cid) {
-    if (!function_exists('billing_revision')) {
-        return 'Prorated dues payment requires billing module.';
-    }
-    $contact = crm_get_one('contact', array('cid'=>$cid));
-    // Calculate fraction of the billing period
-    $mship = end($contact['member']['membership']);
-    $date = getdate(strtotime($mship['start']));
-    $period = billing_days_in_period($date);
-    $day = $date['mday'];
-    $fraction = ($period - $day + 1.0) / $period;
-    // Get payment amount
-    $due = payment_parse_currency($mship['plan']['price']);
-    $due['value'] = ceil($due['value'] * $fraction);
-    $html .= $due['value'];
-    // Create button
-    $html = "<fieldset><legend>First month prorated dues</legend>";
-    $params = array(
-        'referenceId' => $cid
-        , 'amount' => $due['code'] . ' ' . payment_format_currency($due, false) 
-        , 'description' => 'CRM Dues Payment'
-    );
-    $amount = payment_format_currency($due);
-    $html .= "<p><strong>First month's dues:</strong> $amount</p>";
-    if ($due['value'] > 0) {
-        $html .= theme('amazon_payment_button', $cid, $params);
-    }
-    $html .= '</fieldset>';
-    return $html;
-}
-
-/**
- * Return an account summary and amazon payment button.
- * @param $cid The cid of the contact to create a form for.
- * @return An html string for the summary and button.
- */
-function theme_amazon_payment_account_info ($cid) {
-    $balances = payment_accounts(array('cid'=>$cid));
-    $balance = $balances[$cid];
-    $params = array(
-        'referenceId' => $cid
-        , 'amount' => $balance['code'] . ' ' . payment_format_currency($balance, false) 
-        , 'description' => 'CRM Dues Payment'
-    );
-    $output = '<div>';
-    $amount = payment_format_currency($balance);
-    $output .= "<p><strong>Outstanding balance:</strong> $amount</p>";
-    if ($balance['value'] > 0) {
-        $output .= theme('amazon_payment_button', $cid, $params);
-    }
-    $output .= '</div>';
-    return $output;
 }
 
 /**

@@ -70,6 +70,12 @@ $config_modules = array(
 // Track RFID key serial numbers
 //$config_modules[] = "key";
 
+// Track user meta data
+//$config_modules[] = "user_meta";
+
+// Track plan meta data
+//$config_modules[] = "plan_meta";
+
 // Track payments, manual entry
 $config_modules[] = "payment";
 
@@ -81,6 +87,9 @@ $config_modules[] = "amazon_payment";
 
 // Automated billing
 $config_modules[] = "billing";
+
+// Assign a profile picture using gravatar 
+//$config_modules[] = "profile_picture";
 
 // Assign members a mentor 
 //$config_modules[] = "mentor";
@@ -95,6 +104,8 @@ $config_links = array(
     , 'members' => 'Members'
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
+    , 'user_metas' => 'User Meta Data'
+    , 'plan_metas' => 'Plan Meta Data'
     , 'payments' => 'Payments'
     , 'accounts' => 'Accounts'
     , 'reports' => 'Reports'

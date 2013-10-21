@@ -1,4 +1,4 @@
-<?php 
+ <?php 
 
 /*
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
@@ -74,13 +74,27 @@ function command_member_add () {
     
     // Build contact object
     $contact = array(
-        'firstName' => $_POST['firstName']
-        , 'middleName' => $_POST['middleName']
+        'memberNumber' => $_POST['memberNumber']
+        , 'parentNumber' => $_POST['parentNumber']
+        , 'firstName' => $_POST['firstName']
         , 'lastName' => $_POST['lastName']
+        , 'joined' => $_POST['joined']
+        , 'company' => $_POST['company']
+        , 'school' => $_POST['school']
+        , 'studentID' => $_POST['studentID']
+        , 'address1' => $_POST['address1']
+        , 'address2' => $_POST['address2']
+        , 'city' => $_POST['city']
+        , 'state' => $_POST['state']
+        , 'zip' => $_POST['zip']
         , 'email' => $_POST['email']
         , 'phone' => $_POST['phone']
+        , 'over18' => $_POST['over18']
         , 'emergencyName' => $_POST['emergencyName']
+        , 'emergencyRelation' => $_POST['emergencyRelation']
         , 'emergencyPhone' => $_POST['emergencyPhone']
+        , 'emergencyEmail' => $_POST['emergencyEmail']
+        , 'notes' => $_POST['notes']
     );
     // Add user fields
     $user = array('username' => $username);
@@ -122,14 +136,16 @@ function command_member_add () {
         $esc_create_paypal_contact = $_POST['create_paypal_contact'] ? '1' : '0';
         $esc_paypal_email = $_POST['email'];
         if ($esc_create_paypal_contact === '1') {
-        $sql = "
-            INSERT INTO `contact_paypal`
-            (`paypal_email`, `cid`)
-            VALUES
-            ('$esc_paypal_email', '$esc_cid')
-        ";
-        $res = mysql_query($sql);
-        if (!$res) crm_error(mysql_error());
+            if (!empty($esc_paypal_email)) {
+                $sql = "
+                    INSERT INTO `contact_paypal`
+                    (`paypal_email`, `cid`)
+                    VALUES
+                    ('$esc_paypal_email', '$esc_cid')
+                ";
+                $res = mysql_query($sql);
+                if (!$res) crm_error(mysql_error());
+            }
         }
     }
     
@@ -143,9 +159,9 @@ function command_member_add () {
     }
     
     // Notify user
-    $confirm_url = user_reset_password_url($contact['user']['username']);
+    /*$confirm_url = user_reset_password_url($contact['user']['username']);
     $content = theme('member_welcome_email', $contact['user']['cid'], $confirm_url);
-    mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);
+    mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);*/
     
     return crm_url("contact&cid=$esc_cid");
 }
@@ -401,18 +417,73 @@ function command_member_import () {
         }
         
         // Add contact
+        $memberNumber = mysql_real_escape_string($row['membernumber']);
+        $parentNumber = mysql_real_escape_string($row['parentnumber']);
         $firstName = mysql_real_escape_string($row['firstname']);
-        $middleName = mysql_real_escape_string($row['middlename']);
         $lastName = mysql_real_escape_string($row['lastname']);
+        $joined = mysql_real_escape_string($row['joined']);
+        $company = mysql_real_escape_string($row['company']);
+        $school = mysql_real_escape_string($row['school']);
+        $studentID = mysql_real_escape_string($row['studentid']);
+        $address1 = mysql_real_escape_string($row['address1']);
+        $address2 = mysql_real_escape_string($row['address2']);
+        $city = mysql_real_escape_string($row['city']);
+        $state = mysql_real_escape_string($row['state']);
+        $zip = mysql_real_escape_string($row['zip']);
         $email = mysql_real_escape_string($row['email']);
         $phone = mysql_real_escape_string($row['phone']);
-        $emergencyName = mysql_real_escape_string($row['emergencyname']);
+        $over18 = intval($row['over18']);
+        $emergencyName = mysql_real_escape_string($row['emergencycontact']);
+        $emergencyRelation = mysql_real_escape_string($row['emergencyrelation']);
         $emergencyPhone = mysql_real_escape_string($row['emergencyphone']);
+        $emergencyEmail = mysql_real_escape_string($row['emergencyemail']);
+        $notes = mysql_real_escape_string($row['notes']);
         $sql = "
             INSERT INTO `contact`
-            (`firstName`,`middleName`,`lastName`,`email`,`phone`,`emergencyName`,`emergencyPhone`)
+                (`memberNumber`
+                ,`parentNumber`
+                ,`firstName`
+                ,`lastName`
+                ,`joined`
+                ,`company`
+                ,`school`
+                ,`studentID`
+                ,`address1`
+                ,`address2`
+                ,`city`
+                ,`state`
+                ,`zip`
+                ,`email`
+                ,`phone`
+                ,`over18`
+                ,`emergencyName`
+                ,`emergencyRelation`
+                ,`emergencyPhone`
+                ,`emergencyEmail`
+                ,`notes`)
             VALUES
-            ('$firstName','$middleName','$lastName','$email','$phone','$emergencyName','$emergencyPhone')";
+                ('$memberNumber'
+                ,'$parentNumber'
+                ,'$firstName'
+                ,'$lastName'
+                ,'$joined'
+                ,'$company'
+                ,'$school'
+                ,'$studentID'
+                ,'$address1'
+                ,'$address2'
+                ,'$city'
+                ,'$state'
+                ,'$zip'
+                ,'$email'
+                ,'$phone'
+                ,'$over18'
+                ,'$emergencyName'
+                ,'$emergencyRelation'
+                ,'$emergencyPhone'
+                ,'$emergencyEmail'
+                ,'$notes')";
+
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         $cid = mysql_insert_id();
@@ -424,6 +495,17 @@ function command_member_import () {
             (`cid`)
             VALUES
             ('$esc_cid')";
+        $res = mysql_query($sql);
+        if (!$res) crm_error(mysql_error());
+
+        // Add RFID
+        $RFID = $row['rfid'];
+        $esc_RFID = mysql_real_escape_string($RFID);
+        $sql = "
+            INSERT INTO `key`
+            (`cid`,`serial`)
+            VALUES
+            ('$esc_cid','$esc_RFID')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         
@@ -476,7 +558,7 @@ function command_member_import () {
             $res = mysql_query($sql);
             if (!$res) crm_error(mysql_error());
         }
-        
+
         // Add plan if necessary
         $esc_plan_name = mysql_real_escape_string($row['plan']);
         $sql = "SELECT `pid` FROM `plan` WHERE `name`='$esc_plan_name'";
@@ -499,27 +581,28 @@ function command_member_import () {
         
         // Add membership
         $esc_start = mysql_real_escape_string($row['startdate']);
+        $esc_end = mysql_real_escape_string($row['enddate']);
         $esc_pid = mysql_real_escape_string($pid);
-        
         $sql = "
             INSERT INTO `membership`
-            (`cid`, `pid`, `start`)
+            (`cid`, `pid`, `start`, `end`)
             VALUES
-            ('$esc_cid', '$esc_pid', '$esc_start')
+            ('$esc_cid', '$esc_pid', '$esc_start', '$esc_end')
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
         
         if (function_exists('paypal_payment_revision')) {
-            $sql = "
-                INSERT INTO `contact_paypal`
-                (`paypal_email`, `cid`)
-                VALUES
-                ('$email', '$esc_cid')
-            ";
-            
-            $res = mysql_query($sql);
-            if (!$res) crm_error(mysql_error());
+            if (!empty($email)) {
+                $sql = "
+                    INSERT INTO `contact_paypal`
+                    (`paypal_email`, `cid`)
+                    VALUES
+                    ('$email', '$esc_cid')
+                ";
+                $res = mysql_query($sql);
+                if (!$res) crm_error(mysql_error());
+            }
         }
         
         // Notify admins
@@ -532,9 +615,9 @@ function command_member_import () {
         }
         
         // Notify user
-        $confirm_url = user_reset_password_url($user['username']);
+        /*$confirm_url = user_reset_password_url($user['username']);
         $content = theme('member_welcome_email', $user['cid'], $confirm_url);
-        mail($email, "Welcome to $config_org_name", $content, $headers);
+        mail($email, "Welcome to $config_org_name", $content, $headers);*/
     }
     
     return crm_url('members');

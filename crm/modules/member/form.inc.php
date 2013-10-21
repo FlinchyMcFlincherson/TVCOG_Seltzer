@@ -391,9 +391,6 @@ function member_membership_delete_form ($sid) {
         return array();
     }
     $member_name = $member['contact']['firstName'];
-    if (!empty($member['contact']['middleName'])) {
-        $member_name .= ' ' . $member['contact']['middleName'];
-    }
     $member_name .= ' ' . $member['contact']['lastName'];
     */
     
@@ -570,7 +567,35 @@ function member_import_form () {
         , 'fields' => array(
             array(
                 'type' => 'message'
-                , 'value' => '<p>To import members, upload a csv.  The csv should have a header row with the following fields:</p><ul><li>First Name</li><li>Middle Name</li><li>Last Name</li><li>Email</li><li>Phone</li><li>Emergency Name</li><li>Emergency Phone</li><li>Username</li><li>Plan</li><li>Start Date</li></ul>'
+                , 'value' => '<p>To import members, upload a csv.  The csv should have a header row with the following fields:</p>
+                <ul>
+                <li>Member Number</li>
+                <li>Parent Number</li>
+                <li>First Name</li>
+                <li>Last Name</li>
+                <li>Joined</li>
+                <li>Company</li>
+                <li>School</li>
+                <li>Student ID</li>
+                <li>Address 1</li>
+                <li>Address 2</li>
+                <li>City</li>
+                <li>State</li>
+                <li>Zip</li>
+                <li>Email</li>
+                <li>Phone</li>
+                <li>Over 18 (Set to 1/0 signalling Y/N)</li>
+                <li>Emergency Contact</li>
+                <li>Emergency Relation</li>
+                <li>Emergency Phone</li>
+                <li>Emergency Email</li>
+                <li>Notes</li>
+                <li>Username</li>
+                <li>RFID</li>
+                <li>Plan</li>
+                <li>Start Date</li>
+                <li>End Date</li>
+                </ul>'
             )
             , array(
                 'type' => 'file'
@@ -597,7 +622,13 @@ function plan_import_form () {
         , 'fields' => array(
             array(
                 'type' => 'message'
-                , 'value' => '<p>To import plans, upload a csv.  The csv should have a header row with the following fields:</p><ul><li>Plan Name</li><li>Price</li><li>Active (Set to 1/0 signalling Y/N)</li><li>Voting (Set to 1/0 signalling Y/N)</li></ul>'
+                , 'value' => '<p>To import plans, upload a csv.  The csv should have a header row with the following fields:</p>
+                <ul>
+                <li>Plan Name</li>
+                <li>Price</li>
+                <li>Active (Set to 1/0 signalling Y/N)</li>
+                <li>Voting (Set to 1/0 signalling Y/N)</li>
+                </ul>'
             )
             , array(
                 'type' => 'file'

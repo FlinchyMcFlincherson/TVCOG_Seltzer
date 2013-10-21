@@ -451,7 +451,7 @@ function mentor_edit_form ($cid) {
     $contact = $data[0];
     
     // Construct member name
-    $name = member_name($contact['firstName'], $contact['middleName'], $contact['lastName']);
+    $name = member_name($contact['firstName'], $contact['lastName']);
     
     // Get list of current mentor cids.
     $mentor_cids = $contact['member']['mentorships']['mentor_cids'];
@@ -527,7 +527,7 @@ function mentor_delete_form ($cid) {
     $contact = $data[0];
     
     // Construct member name
-    $name = member_name($contact['firstName'], $contact['middleName'], $contact['lastName']);
+    $name = member_name($contact['firstName'], $contact['lastName']);
     
     // Get list of current mentor cids.
     $mentor_cid = $contact['member']['mentorships']['mentor_cids'][0];
@@ -635,7 +635,6 @@ function command_mentor_update() {
     }
     $sql .= "
         `serial`='$esc_post[serial]',
-        `slot`='$esc_post[slot]'
         WHERE `kid`='$esc_post[kid]'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());

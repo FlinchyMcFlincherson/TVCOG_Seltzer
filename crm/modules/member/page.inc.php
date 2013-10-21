@@ -60,7 +60,47 @@ function member_page (&$page_data, $page_name, $options) {
                 $opts = array(
                     'filter'=>$_SESSION['member_filter']
                     , 'show_export'=>true
-                    , 'exclude'=>array('emergencyName', 'emergencyPhone')
+                    //Fields displayed in the contact "view members" table can be hidden or revealed by commenting out elements and their corresponding 
+                    //commas in this array (yes, this is ghetto as hell and I know it)
+                    , 'exclude'=>array(
+                        //'parentNumber'
+                        //,
+                        //'joined'
+                        //,
+                        //$plan
+                        //,
+                        'company'
+                        ,
+                        'school'
+                        ,
+                        'studentID'
+                        ,
+                        'address1' 
+                        ,
+                        'address2' 
+                        ,
+                        'city'
+                        ,
+                        'state'
+                        ,
+                        'zip'
+                        ,
+                        'phone'
+                        ,
+                        'email'
+                        ,
+                        'over18'
+                        ,
+                        'emergencyName'
+                        ,
+                        'emergencyRelation'
+                        ,
+                        'emergencyPhone'
+                        ,
+                        'emergencyEmail'
+                        ,
+                        'notes'
+                        )
                 );
                 $view .= theme('table', 'member', $opts);
                 page_add_content_top($page_data, $view, 'View');

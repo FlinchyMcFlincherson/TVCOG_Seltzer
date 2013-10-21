@@ -25,7 +25,7 @@
  * this number.
  */
 function paypal_payment_revision () {
-    return 1;
+    return 2;
 }
 
 /**
@@ -55,6 +55,14 @@ function paypal_payment_install($old_revision = 0) {
               `paypal_email` varchar(255) NOT NULL,
               PRIMARY KEY (`paypal_email`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+        ';
+        $res = mysql_query($sql);
+        if (!$res) crm_error(mysql_error());
+    }
+    
+    if ($old_revision < 2) {
+        $sql = '
+        ALTER TABLE `contact_paypal` DROP PRIMARY KEY, ADD PRIMARY KEY(`cid`);
         ';
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
@@ -155,7 +163,7 @@ function paypal_payment_contact_save ($contact) {
     $esc_email = mysql_real_escape_string($contact['paypal_email']);
     $esc_cid = mysql_real_escape_string($contact['cid']);    
     // Check whether the paypal contact already exists in the database
-    $sql = "SELECT * FROM `contact_paypal` WHERE `paypal_email` = '$esc_email'";
+    $sql = "SELECT * FROM `contact_paypal` WHERE `cid` = '$esc_cid'";
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     $row = mysql_fetch_assoc($res);
@@ -164,8 +172,8 @@ function paypal_payment_contact_save ($contact) {
         if (isset($contact['cid'])) {
             $sql = "
                 UPDATE `contact_paypal`
-                SET `cid`='$esc_cid'
-                WHERE `paypal_email`='$esc_email'
+                SET `paypal_email`='$esc_email'
+                WHERE `cid`='$esc_cid'
             ";
             $res = mysql_query($sql);
             if (!$res) crm_error(mysql_error());
@@ -174,7 +182,7 @@ function paypal_payment_contact_save ($contact) {
         // Name is not in database, insert new
         $sql = "
             INSERT INTO `contact_paypal`
-            (`paypal_email`, `cid`) VALUES ('$esc_email', '$esc_cid')";
+            (`cid`, `paypal_email`) VALUES ('$esc_cid', '$esc_email')";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
     }
@@ -297,10 +305,12 @@ function paypal_payment_contact_table($opts){
             // Construct ops array
             $ops = array();
             // Add edit op
-            // TODO
+            if (user_access('payment_edit')) {
+                $ops[] = '<a href=' . crm_url('paypal_payment_contact&cid=' . $contact['cid'] . '#tab-edit') . '>edit</a>';
+            }
             // Add delete op
             if (user_access('payment_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=paypal_payment_contact&id=' . $contact['cid']) . '>delete</a>';
+                $ops[] = '<a href=' . crm_url('delete&type=paypal_payment_contact&cid=' . $contact['cid']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -332,15 +342,21 @@ function paypal_payment_page (&$page_data, $page_name, $options) {
             page_add_content_top($page_data, theme('table', 'paypal_payment_contact', array('show_export'=>true)), 'View');
             page_add_content_top($page_data, theme('form', crm_get_form('paypal_payment_contact_add')), 'Add');
             break;
-        case 'contact':
-            if (user_access('payment_view') || $_GET['cid'] == user_id()) {
-                page_add_content_bottom($page_data, theme('paypal_payment_account_info', $_GET['cid']), 'Account');
+        case 'paypal_payment_contact':
+            // Capture paypal contact id
+            $cid = $options['cid'];
+            if (empty($cid)) {
+                return;
             }
-            if (function_exists('billing_revision')) {
-                if (user_access('payment_view') || $_GET['cid'] == user_id()) {
-                    page_add_content_bottom($page_data, theme('paypal_payment_first_month', $_GET['cid']), 'Plan');
-                }
+            
+            // Set page title
+            page_set_title($page_data, 'Administer Paypal Contact');
+            
+            // Add edit tab
+            if (user_access('payment_edit') || $_GET['cid'] == user_id()) {
+                page_add_content_top($page_data, theme('form', crm_get_form('paypal_payment_contact_edit', $cid)), 'Edit');
             }
+            
             break;
     }
 }
@@ -403,18 +419,73 @@ function paypal_payment_contact_add_form () {
                 'fields' => array(
                     array(
                         'type' => 'text',
-                        'label' => 'Paypal Email Address',
-                        'name' => 'paypal_email'
-                    ),
-                    array(
-                        'type' => 'text',
                         'label' => "Member's Name",
                         'name' => 'cid',
                         'autocomplete' => 'contact_name'
                     ),
                     array(
+                        'type' => 'text',
+                        'label' => 'Paypal Email Address',
+                        'name' => 'paypal_email'
+                    ),
+                    array(
                         'type' => 'submit',
                         'value' => 'Add'
+                    )
+                )
+            )
+        )
+    );
+    
+    return $form;
+}
+
+/**
+ * Return the form structure for the edit paypal contact form.
+ *
+ * @param The cid of the contact to edit a paypal contact for.
+ * @return The form structure.
+*/
+function paypal_payment_contact_edit_form ($cid) {
+    
+    // Ensure user is allowed to edit paypal contacts
+    if (!user_access('payment_edit')) {
+        return crm_url('paypal-admin');
+    }
+    
+     // Get paypal contact data
+    $data = crm_get_data('paypal_payment_contact', array('cid'=>$cid));
+    $paypal_payment_contact = $data[0];
+    
+    $contactName = theme('contact_name', $paypal_payment_contact['cid'], true);
+    // Create form structure
+    $form = array(
+        'type' => 'form',
+        'method' => 'post',
+        'command' => 'paypal_payment_contact_edit',
+        'hidden' => array(
+            'cid' => $paypal_payment_contact['cid']
+        ),
+        'fields' => array(
+            array(
+                'type' => 'fieldset',
+                'label' => 'Edit Paypal Contact',
+                'fields' => array(
+                    
+                    array(
+                        'type' => 'readonly',
+                        'label' => "Member's Name",
+                        'name' => 'name',
+                        'value' => $contactName
+                    ),array(
+                        'type' => 'text',
+                        'label' => 'Paypal Email Address',
+                        'name' => 'paypal_email',
+                        'value' => $paypal_payment_contact['paypal_email']
+                    ),
+                    array(
+                        'type' => 'submit',
+                        'value' => 'Update'
                     )
                 )
             )
@@ -591,65 +662,17 @@ function command_paypal_payment_contact_add (){
 }
 
 /**
+ * Edit a paypal contact.
+ * @return The url to display on completion.
+ */
+function command_paypal_payment_contact_edit (){
+    paypal_payment_contact_save($_POST);
+    return crm_url('paypal-admin');
+}
+
+/**
  * Return themed html for paypal admin links.
  */
 function theme_paypal_payment_admin () {
     return '<p><a href=' . crm_url('paypal-admin') . '>Administer</a></p>';
-}
-
-/**
- * Return themed html for prorated first month button.
- */
-function theme_paypal_payment_first_month ($cid) {
-    if (!function_exists('billing_revision')) {
-        return 'Prorated dues payment requires billing module.';
-    }
-    $contact = crm_get_one('contact', array('cid'=>$cid));
-    // Calculate fraction of the billing period
-    $mship = end($contact['member']['membership']);
-    $date = getdate(strtotime($mship['start']));
-    $period = billing_days_in_period($date);
-    $day = $date['mday'];
-    $fraction = ($period - $day + 1.0) / $period;
-    // Get payment amount
-    $due = payment_parse_currency($mship['plan']['price']);
-    $due['value'] = ceil($due['value'] * $fraction);
-    $html .= $due['value'];
-    // Create button
-    $html = "<fieldset><legend>First month prorated dues</legend>";
-    $params = array(
-        'referenceId' => $cid
-        , 'amount' => $due['code'] . ' ' . payment_format_currency($due, false) 
-        , 'description' => 'CRM Dues Payment'
-    );
-    $amount = payment_format_currency($due);
-    $html .= "<p><strong>First month's dues:</strong> $amount</p>";
-    if ($due['value'] > 0) {
-        $html .= theme('paypal_payment_button', $cid, $params);
-    }
-    $html .= '</fieldset>';
-    return $html;
-}
-
-/**
- * Return an account summary and paypal payment button.
- * @param $cid The cid of the contact to create a form for.
- * @return An html string for the summary and button.
- */
-function theme_paypal_payment_account_info ($cid) {
-    $balances = payment_accounts(array('cid'=>$cid));
-    $balance = $balances[$cid];
-    $params = array(
-        'referenceId' => $cid
-        , 'amount' => $balance['code'] . ' ' . payment_format_currency($balance, false) 
-        , 'description' => 'CRM Dues Payment'
-    );
-    $output = '<div>';
-    $amount = payment_format_currency($balance);
-    $output .= "<p><strong>Outstanding balance:</strong> $amount</p>";
-    if ($balance['value'] > 0) {
-        $output .= theme('paypal_payment_button', $cid, $params);
-    }
-    $output .= '</div>';
-    return $output;
 }
