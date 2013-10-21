@@ -69,12 +69,12 @@ function member_page (&$page_data, $page_name, $options) {
                         //,
                         //$plan
                         //,
-                        //'company'
-                        //,
-                        //'school'
-                        //,
-                        //'studentID'
-                        //,
+                        'company'
+                        ,
+                        'school'
+                        ,
+                        'studentID'
+                        ,
                         'address1' 
                         ,
                         'address2' 

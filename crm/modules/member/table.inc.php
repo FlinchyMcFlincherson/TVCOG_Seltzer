@@ -71,6 +71,7 @@ function member_table ($opts = NULL) {
             $table['columns'][] = array('title'=>'Joined','class'=>'');
         }
         $table['columns'][] = array('title'=>'Membership','class'=>'');
+        $table['columns'][] = array('title'=>'Paid Through','class'=>'');
         if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'Company','class'=>'');
         }
@@ -138,10 +139,19 @@ function member_table ($opts = NULL) {
             // Construct membership info
             $recentMembership = end($member['membership']);
             $plan = '';
+            $paidThrough = '';
             /*TODO implement logic accounting for the fact that we use the "end date"
              of a membership to represent the "paid until" date in the old DB*/
             if (!empty($recentMembership)) {
                 $plan = $recentMembership['plan']['name'];
+                if ($plan==="Associate" && $recentMembership['end']==='0000-00-00'){
+                    $paidThrough = "N/A";    
+                }
+                else
+                {
+                    $paidThrough = $recentMembership['end'];
+                }
+                
             }          
             // Add cells
             if ($export) {
@@ -159,6 +169,7 @@ function member_table ($opts = NULL) {
                 $row[] = $member['contact']['joined'];
             }
             $row[] = $plan;
+            $row[] = $paidThrough;
             if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
                 $row[] = $member['contact']['company'];
             }
