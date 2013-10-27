@@ -833,7 +833,7 @@ function command_contact_update () {
     $contact['notes'] = $_POST['notes'];
     // Save changes to database
     $contact = contact_save($contact);
-    return crm_url('contacts');
+    return crm_url('members');
 }
 
 /**
