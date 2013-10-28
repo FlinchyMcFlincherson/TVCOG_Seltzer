@@ -71,7 +71,8 @@ function member_data ($opts = array()) {
         }
     }
     $sql .= " GROUP BY `member`.`cid` ";
-    $sql .= " ORDER BY `lastName`, `firstName` ASC ";
+    //Excluding the following line causes the member data array to sort by the "Member Number" field, which is preferable
+    //$sql .= " ORDER BY `lastName`, `firstName` ASC ";
 
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
