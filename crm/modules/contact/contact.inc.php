@@ -787,6 +787,7 @@ function command_contact_add () {
     );
     // Save to database
     $contact = contact_save($contact);
+    $cid = $contact['cid'];
     return crm_url("contact&cid=$cid");
 }
 
@@ -832,7 +833,7 @@ function command_contact_update () {
     $contact['notes'] = $_POST['notes'];
     // Save changes to database
     $contact = contact_save($contact);
-    return crm_url('contacts');
+    return crm_url('members');
 }
 
 /**
