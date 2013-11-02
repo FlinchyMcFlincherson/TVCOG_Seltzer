@@ -45,13 +45,38 @@ function command_member_add () {
         return crm_url('members');
     }
     
-    // Find username or create a new one
-    $username = $_POST['username'];
+    // Validate the presence of required fields
+    $memberNumber = $_POST['memberNumber'];
+    $firstName = $_POST['firstName'];
+    $lastName = $_POST['lastName'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+
+    if (empty($memberNumber) 
+        or empty($firstName)
+        or empty($lastName)
+        or empty($email)
+        or empty($phone)) {
+        error_register('<p>Error: Required fields are blank.</p>
+                        <p>The following fields are required:</p>
+                        <ul><li>Member Number</li>
+                        <li>First Name</li>
+                        <li>Last Name</li>
+                        <li>Email</li>
+                        <li>Phone</li><ul>');
+        return crm_url('members&tab=add');
+    }
+
+    // Automatically construct a username
+    $username = strtolower($_POST[firstName]{0} . $_POST[lastName] . $_POST[memberNumber]);
+
+    // If username exists, add incremental digit to the end
+    $validName = 0;
     $n = 0;
-    while (empty($username) && $n < 100) {
+    while ($validName === 0 && $n < 100) {
         
         // Contruct test username
-        $test_username = strtolower($_POST[firstName]{0} . $_POST[lastName]);
+        $test_username = $username;
         if ($n > 0) {
             $test_username .= $n;
         }
@@ -64,14 +89,11 @@ function command_member_add () {
         $row = mysql_fetch_assoc($res);
         if (!$row) {
             $username = $test_username;
+            $validName = 1;
         }
         $n++;
     }
-    if (empty($username)) {
-        error_register('Please specify a username');
-        return crm_url('members&tab=add');
-    }
-    
+
     // Build contact object
     $contact = array(
         'memberNumber' => $_POST['memberNumber']
@@ -96,21 +118,22 @@ function command_member_add () {
         , 'emergencyEmail' => $_POST['emergencyEmail']
         , 'notes' => $_POST['notes']
     );
+
     // Add user fields
     $user = array('username' => $username);
     $contact['user'] = $user;
+    
     // Add member fields
     $membership = array(
         array(
             'pid' => $_POST['pid']
             , 'start' => $_POST['start']
+            , 'end' => $_POST['end']
         )
     );
     $member = array('membership' => $membership);
     $contact['member'] = $member;
-    // Add user fields
-    $user = array('username' => $username);
-    $contact['user'] = $user;
+    
     // Save to database
     $contact = contact_save($contact);
     
@@ -158,11 +181,14 @@ function command_member_add () {
         mail($config_email_to, "New Member: $name", $content, $headers);
     }
     
-    // Notify user
-    /*$confirm_url = user_reset_password_url($contact['user']['username']);
-    $content = theme('member_welcome_email', $contact['user']['cid'], $confirm_url);
-    mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);*/
-    
+    // Notify user if indicated
+    $esc_send_user_email = $_POST['send_user_email'] ? '1' : '0';
+    if ($esc_send_user_email === '1') {
+        $confirm_url = user_reset_password_url($contact['user']['username']);
+        $content = theme('member_welcome_email', $contact['user']['cid'], $confirm_url);
+        mail($_POST['email'], "Welcome to $config_org_name", $content, $headers);
+    }
+
     return crm_url("contact&cid=$esc_cid");
 }
 

@@ -40,18 +40,7 @@ function member_add_form () {
     // Change form command
     $form['command'] = 'member_add';
     
-    // Add member data
-    $form['fields'][] = array(
-        'type' => 'fieldset',
-        'label' => 'User Info',
-        'fields' => array(
-            array(
-                'type' => 'text',
-                'label' => 'Username',
-                'name' => 'username'
-            )
-        )
-    );
+    // Add membership data
     $form['fields'][] = array(
         'type' => 'fieldset',
         'label' => 'Membership Info',
@@ -69,6 +58,13 @@ function member_add_form () {
                 'name' => 'start',
                 'value' => $start,
                 'class' => 'date'
+            ),
+            array(
+                'type' => 'text',
+                'label' => 'End Date',
+                'name' => 'end',
+                'value' => $end,
+                'class' => 'date'
             )
         )
     );
@@ -85,6 +81,19 @@ function member_add_form () {
             )
         );
     }
+
+    //Ask if user wants to send notification email
+    $form['fields'][] = array(
+            'type' => 'fieldset',
+            'label' => 'Email Notification',
+            'fields' => array(
+                array(
+                    'type' => 'checkbox',
+                    'label' => 'Send User Email Notification',
+                    'name' => 'send_user_email'
+                )
+            )
+    );
     
     return $form;
 }
