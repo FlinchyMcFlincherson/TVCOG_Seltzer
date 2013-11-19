@@ -50,20 +50,17 @@ function command_member_add () {
     $firstName = $_POST['firstName'];
     $lastName = $_POST['lastName'];
     $email = $_POST['email'];
-    $phone = $_POST['phone'];
 
     if (empty($memberNumber) 
         or empty($firstName)
         or empty($lastName)
-        or empty($email)
-        or empty($phone)) {
+        or empty($email)) {
         error_register('<p>Error: Required fields are blank.</p>
                         <p>The following fields are required:</p>
                         <ul><li>Member Number</li>
                         <li>First Name</li>
                         <li>Last Name</li>
-                        <li>Email</li>
-                        <li>Phone</li><ul>');
+                        <li>Email</li>');
         return crm_url('members&tab=add');
     }
 
