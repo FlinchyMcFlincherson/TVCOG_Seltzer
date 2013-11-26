@@ -21,6 +21,57 @@
 */
 
 /**
+ * Finds and returns the next available sequential member number.
+ *
+ * @return The next sequential member number.
+*/ 
+function get_member_number () {
+
+    // Query database
+    $sql = "
+        SELECT `memberNumber`
+        FROM `contact`
+        ORDER BY `memberNumber` ASC ";
+
+    $res = mysql_query($sql);
+    if (!$res) crm_error(mysql_error());
+
+    // Store data
+    $memberNumbers = array();
+    $i = 0;
+
+    while($row = mysql_fetch_assoc($res)){
+        foreach($row as $number){
+            $memberNumbers[$i] = $number;
+            $i++;
+        }
+    }
+
+    // Sort the results
+    sort($memberNumbers);
+
+    /*
+    Loop through the sorted array, comparing the value of the current index
+    to the value of the next. Stop when the difference between the two is 
+    more than 1. The value of the current index + 1 should be the next 
+    available number
+    */
+    $i = 1;
+    $lastNumber = $memberNumbers[$i];
+    $nextNumber = $memberNumbers[$i + 1];
+
+    while ($lastNumber + 1 == $nextNumber){
+        // print "<p> Last Number = " . $lastNumber;
+        // print "<p> Next Number = " . $nextNumber;
+        $i++;
+        $lastNumber = $memberNumbers[$i];
+        $nextNumber = $memberNumbers[$i + 1];
+    }
+
+    return $lastNumber + 1;
+}
+
+/**
  * Return data for one or more members.
  *
  * @param $opts An associative array of options, possible keys are:

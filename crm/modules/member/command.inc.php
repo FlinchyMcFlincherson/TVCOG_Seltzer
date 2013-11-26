@@ -46,18 +46,15 @@ function command_member_add () {
     }
     
     // Validate the presence of required fields
-    $memberNumber = $_POST['memberNumber'];
     $firstName = $_POST['firstName'];
     $lastName = $_POST['lastName'];
     $email = $_POST['email'];
 
-    if (empty($memberNumber) 
-        or empty($firstName)
+    if (empty($firstName)
         or empty($lastName)
         or empty($email)) {
         error_register('<p>Error: Required fields are blank.</p>
                         <p>The following fields are required:</p>
-                        <ul><li>Member Number</li>
                         <li>First Name</li>
                         <li>Last Name</li>
                         <li>Email</li>');
