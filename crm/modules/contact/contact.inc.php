@@ -586,15 +586,17 @@ function contact_form ($opts = array()) {
     } else {
         $label = 'Add Contact';
     }
+
     // Add fields
     $form['fields'][] = array(
         'type' => 'fieldset',
         'label' => $label,
         'fields' => array(
             array(
-                'type' => 'text'
+                'type' => 'readonly'
                 , 'label' => 'Member Number'
                 , 'name' => 'memberNumber'
+                , 'value' => get_member_number()
             )
             , array(
                 'type' => 'text'
