@@ -553,7 +553,7 @@ function training_delete_form ($tid) {
 function training_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'Keys';
+            $params['tab'] = 'Training';
             break;
     }
 }
@@ -570,7 +570,7 @@ function command_training_add() {
         return crm_url('training&tid=' . $_POST['tid']);
     }
     training_save($_POST);
-    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=keys');
+    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=training');
 }
 
 /**
@@ -613,7 +613,7 @@ function command_training_delete() {
 function training_page_list () {
     $pages = array();
     if (user_access('training_view')) {
-        $pages[] = 'Keys';
+        $pages[] = 'Training';
     }
     return $pages;
 }
@@ -637,26 +637,26 @@ function training_page (&$page_data, $page_name, $options) {
                 return;
             }
             
-            // Add Keys tab
+            // Add training tab
             if (user_access('training_view') || user_access('training_edit') || user_access('training_delete') || $cid == user_id()) {
-                $keys = theme('table', 'key', array('cid' => $cid));
-                $keys .= theme('training_add_form', $cid);
-                page_add_content_bottom($page_data, $keys, 'Keys');
+                $training = theme('table', 'training', array('cid' => $cid));
+                $training .= theme('training_add_form', $cid);
+                page_add_content_bottom($page_data, $training, 'Training');
             }
             
             break;
         
-        case 'keys':
-            page_set_title($page_data, 'Keys');
+        case 'trainings':
+            page_set_title($page_data, 'Training');
             if (user_access('training_view')) {
-                $keys = theme('table', 'key', array('join'=>array('contact', 'member'), 'show_export'=>true));
-                page_add_content_top($page_data, $keys, 'View');
+                $training = theme('table', 'training', array('join'=>array('contact', 'member'), 'show_export'=>true));
+                page_add_content_top($page_data, $training, 'View');
             }
             break;
         
-        case 'key':
+        case 'training':
             
-            // Capture key id
+            // Capture training id
             $tid = $options['tid'];
             if (empty($tid)) {
                 return;
