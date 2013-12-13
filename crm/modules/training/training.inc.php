@@ -236,12 +236,12 @@ function training_save ($training) {
         $tid = $training['tid'];
         $esc_tid = mysql_real_escape_string($tid);
         $clauses = array();
-        foreach ($fields as $k) {
-            if ($k == 'end' && empty($training[$k])) {
+        foreach ($fields as $t) {
+            if ($t == 'end' && empty($training[$t])) {
                 continue;
             }
-            if (isset($training[$k]) && $k != 'tid') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($training[$k]) . "' ";
+            if (isset($training[$t]) && $t != 'tid') {
+                $clauses[] = "`$t`='" . mysql_real_escape_string($training[$t]) . "' ";
             }
         }
         $sql = "UPDATE `training` SET " . implode(', ', $clauses) . " ";
@@ -253,13 +253,13 @@ function training_save ($training) {
         // Insert new training
         $cols = array();
         $values = array();
-        foreach ($fields as $k) {
-            if (isset($training[$k])) {
-                if ($k == 'end' && empty($training[$k])) {
+        foreach ($fields as $t) {
+            if (isset($training[$t])) {
+                if ($t == 'end' && empty($training[$t])) {
                     continue;
                 }
-                $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($training[$k]) . "'";
+                $cols[] = "`$t`";
+                $values[] = "'" . mysql_real_escape_string($training[$t]) . "'";
             }
         }
         $sql = "INSERT INTO `training` (" . implode(', ', $cols) . ") ";
