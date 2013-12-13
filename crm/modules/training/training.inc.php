@@ -4,7 +4,7 @@
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
     
     This file is part of the Seltzer CRM Project
-    key.inc.php - Key tracking module
+    training.inc.php - training tracking module
 
     Seltzer is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ function training_permissions () {
 function training_install($old_revision = 0) {
     if ($old_revision < 1) {
         $sql = '
-            CREATE TABLE IF NOT EXISTS `key` (
+            CREATE TABLE IF NOT EXISTS `training` (
               `tid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
               `start` date DEFAULT NULL,
@@ -95,23 +95,23 @@ function training_install($old_revision = 0) {
 // Utility functions ///////////////////////////////////////////////////////////
 
 /**
- * Generate a descriptive string for a single key.
+ * Generate a descriptive string for a single training.
  *
- * @param $tid The tid of the key to describe.
+ * @param $tid The tid of the training to describe.
  * @return The description string.
  */
 function training_description ($tid) {
     
-    // Get key data
-    $data = crm_get_data('key', array('tid' => $tid));
+    // Get training data
+    $data = crm_get_data('training', array('tid' => $tid));
     if (empty($data)) {
         return '';
     }
-    $key = $data[0];
+    $training = $data[0];
     
     // Construct description
-    $description = 'Key ';
-    $description .= $key['serial'];
+    $description = 'Training ';
+    $description .= $training['serial'];
     
     return $description;
 }
@@ -119,14 +119,14 @@ function training_description ($tid) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
- * Return data for one or more key card assignments.
+ * Return data for one or more training records.
  *
  * @param $opts An associative array of options, possible keys are:
- *   'tid' If specified, returns a single memeber with the matching key id;
- *   'cid' If specified, returns all keys assigned to the contact with specified id;
+ *   'tid' If specified, returns a single memeber with the matching training id;
+ *   'cid' If specified, returns all trainings completed by the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the key table.
- * @return An array with each element representing a single key card assignment.
+ *   'join' A list of tables to join to the training table.
+ * @return An array with each element representing a single training record.
 */ 
 function training_data ($opts = array()) {
     // Query database
@@ -137,7 +137,7 @@ function training_data ($opts = array()) {
         , `start`
         , `end`
         , `serial`
-        FROM `key`
+        FROM `training`
         WHERE 1";
     if (!empty($opts['tid'])) {
         $esc_tid = mysql_real_escape_string($opts['tid']);
@@ -174,15 +174,15 @@ function training_data ($opts = array()) {
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
-    $keys = array();
+    $trainings = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
         // Contents of row are tid, cid, start, end, serial
-        $keys[] = $row;
+        $trainings[] = $row;
         $row = mysql_fetch_assoc($res);
     }
     // Return data
-    return $keys;
+    return $trainings;
 }
 
 /**
@@ -203,18 +203,18 @@ function training_data_alter ($type, $data = array(), $opts = array()) {
             // Add the cids to the options
             $training_opts = $opts;
             $training_opts['cid'] = $cids;
-            // Get an array of key structures for each cid
-            $training_data = crm_get_data('key', $training_opts);
-            // Create a map from cid to an array of key structures
-            $cid_to_keys = array();
-            foreach ($training_data as $key) {
-                $cid_to_keys[$key['cid']][] = $key;
+            // Get an array of training structures for each cid
+            $training_data = crm_get_data('training', $training_opts);
+            // Create a map from cid to an array of training structures
+            $cid_to_trainings = array();
+            foreach ($training_data as $training) {
+                $cid_to_trainings[$training['cid']][] = $training;
             }
-            // Add key structures to the contact structures
+            // Add training structures to the contact structures
             foreach ($data as $i => $contact) {
-                if (array_key_exists($contact['cid'], $cid_to_keys)) {
-                    $keys = $cid_to_keys[$contact['cid']];
-                    $data[$i]['keys'] = $keys;
+                if (array_key_exists($contact['cid'], $cid_to_trainings)) {
+                    $trainings = $cid_to_trainings[$contact['cid']];
+                    $data[$i]['trainings'] = $trainings;
                 }
             }
             break;
@@ -223,73 +223,73 @@ function training_data_alter ($type, $data = array(), $opts = array()) {
 }
 
 /**
- * Save a key structure.  If $key has a 'tid' element, an existing key will
- * be updated, otherwise a new key will be created.
- * @param $tid The key structure
- * @return The key structure with as it now exists in the database.
+ * Save a training structure.  If $training has a 'tid' element, an existing training will
+ * be updated, otherwise a new training will be created.
+ * @param $tid The training structure
+ * @return The training structure as it now exists in the database.
  */
-function training_save ($key) {
+function training_save ($training) {
     // Escape values
     $fields = array('tid', 'cid', 'serial', 'start', 'end');
-    if (isset($key['tid'])) {
-        // Update existing key
-        $tid = $key['tid'];
+    if (isset($training['tid'])) {
+        // Update existing training
+        $tid = $training['tid'];
         $esc_tid = mysql_real_escape_string($tid);
         $clauses = array();
         foreach ($fields as $k) {
-            if ($k == 'end' && empty($key[$k])) {
+            if ($k == 'end' && empty($training[$k])) {
                 continue;
             }
-            if (isset($key[$k]) && $k != 'tid') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($key[$k]) . "' ";
+            if (isset($training[$k]) && $k != 'tid') {
+                $clauses[] = "`$k`='" . mysql_real_escape_string($training[$k]) . "' ";
             }
         }
-        $sql = "UPDATE `key` SET " . implode(', ', $clauses) . " ";
+        $sql = "UPDATE `training` SET " . implode(', ', $clauses) . " ";
         $sql .= "WHERE `tid`='$esc_tid'";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
-        message_register('Key updated');
+        message_register('Training record updated');
     } else {
-        // Insert new key
+        // Insert new training
         $cols = array();
         $values = array();
         foreach ($fields as $k) {
-            if (isset($key[$k])) {
-                if ($k == 'end' && empty($key[$k])) {
+            if (isset($training[$k])) {
+                if ($k == 'end' && empty($training[$k])) {
                     continue;
                 }
                 $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($key[$k]) . "'";
+                $values[] = "'" . mysql_real_escape_string($training[$k]) . "'";
             }
         }
-        $sql = "INSERT INTO `key` (" . implode(', ', $cols) . ") ";
+        $sql = "INSERT INTO `training` (" . implode(', ', $cols) . ") ";
         $sql .= " VALUES (" . implode(', ', $values) . ")";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
         $tid = mysql_insert_id();
-        message_register('Key added');
+        message_register('Training record added');
     }
-    return crm_get_one('key', array('tid'=>$tid));
+    return crm_get_one('training', array('tid'=>$tid));
 }
 
 /**
- * Delete a key.
- * @param $key The key data structure to delete, must have a 'tid' element.
+ * Delete a training record.
+ * @param $training The training data structure to delete, must have a 'tid' element.
  */
-function training_delete ($key) {
-    $esc_tid = mysql_real_escape_string($key['tid']);
-    $sql = "DELETE FROM `key` WHERE `tid`='$esc_tid'";
+function training_delete ($training) {
+    $esc_tid = mysql_real_escape_string($training['tid']);
+    $sql = "DELETE FROM `training` WHERE `tid`='$esc_tid'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Key deleted.');
+        message_register('Training record deleted.');
     }
 }
 
 // Table data structures ///////////////////////////////////////////////////////
 
 /**
- * Return a table structure for a table of key assignments.
+ * Return a table structure for a table of training records.
  *
  * @param $opts The options to pass to training_data().
  * @return The table structure.
@@ -304,8 +304,8 @@ function training_table ($opts) {
                 break;
         }
     }
-    // Get key data
-    $data = crm_get_data('key', $opts);
+    // Get training data
+    $data = crm_get_data('training', $opts);
     if (count($data) < 1) {
         return array();
     }
@@ -335,26 +335,26 @@ function training_table ($opts) {
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
     // Add rows
-    foreach ($data as $key) {
-        // Add key data
+    foreach ($data as $training) {
+        // Add training data
         $row = array();
         if (user_access('training_view') || $opts['cid'] == user_id()) {
             // Add cells
-            $row[] = theme('contact_name', $cid_to_contact[$key['cid']], true);
-            $row[] = $key['serial'];
-            $row[] = $key['start'];
-            $row[] = $key['end'];
+            $row[] = theme('contact_name', $cid_to_contact[$training['cid']], true);
+            $row[] = $training['serial'];
+            $row[] = $training['start'];
+            $row[] = $training['end'];
         }
         if (!$export && (user_access('training_edit') || user_access('training_delete'))) {
             // Construct ops array
             $ops = array();
             // Add edit op
             if (user_access('training_edit')) {
-                $ops[] = '<a href=' . crm_url('key&tid=' . $key['tid'] . '#tab-edit') . '>edit</a> ';
+                $ops[] = '<a href=' . crm_url('training&tid=' . $training['tid'] . '#tab-edit') . '>edit</a> ';
             }
             // Add delete op
             if (user_access('training_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=key&id=' . $key['tid']) . '>delete</a>';
+                $ops[] = '<a href=' . crm_url('delete&type=training&id=' . $training['tid']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -367,14 +367,14 @@ function training_table ($opts) {
 // Forms ///////////////////////////////////////////////////////////////////////
 
 /**
- * Return the form structure for the add key assignment form.
+ * Return the form structure for the add training record form.
  *
- * @param The cid of the contact to add a key assignment for.
+ * @param The cid of the contact to add a training record for.
  * @return The form structure.
 */
 function training_add_form ($cid) {
     
-    // Ensure user is allowed to edit keys
+    // Ensure user is allowed to edit training records
     if (!user_access('training_edit')) {
         return NULL;
     }
@@ -390,7 +390,7 @@ function training_add_form ($cid) {
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Add Key Assignment',
+                'label' => 'Add Training Record',
                 'fields' => array(
                     array(
                         'type' => 'text',
@@ -423,24 +423,24 @@ function training_add_form ($cid) {
 }
 
 /**
- * Return the form structure for an edit key assignment form.
+ * Return the form structure for an edit training record form.
  *
- * @param $tid The tid of the key assignment to edit.
+ * @param $tid The tid of the training record to edit.
  * @return The form structure.
 */
 function training_edit_form ($tid) {
-    // Ensure user is allowed to edit key
+    // Ensure user is allowed to edit training
     if (!user_access('training_edit')) {
         return NULL;
     }
-    // Get key data
-    $data = crm_get_data('key', array('tid'=>$tid));
-    $key = $data[0];
-    if (empty($key) || count($key) < 1) {
+    // Get training data
+    $data = crm_get_data('training', array('tid'=>$tid));
+    $training = $data[0];
+    if (empty($training) || count($training) < 1) {
         return array();
     }
     // Get corresponding contact data
-    $contact = crm_get_one('contact', array('cid'=>$key['cid']));
+    $contact = crm_get_one('contact', array('cid'=>$training['cid']));
     // Construct member name
     $name = theme('contact_name', $contact, true);
     // Create form structure
@@ -454,13 +454,13 @@ function training_edit_form ($tid) {
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Edit Key Info',
+                'label' => 'Edit Training Record',
                 'fields' => array(
                     array(
                         'type' => 'text',
                         'label' => 'Serial',
                         'name' => 'serial',
-                        'value' => $key['serial']
+                        'value' => $training['serial']
                     ),
                     array(
                         'type' => 'readonly',
@@ -472,14 +472,14 @@ function training_edit_form ($tid) {
                         'class' => 'date',
                         'label' => 'Start',
                         'name' => 'start',
-                        'value' => $key['start']
+                        'value' => $training['start']
                     ),
                     array(
                         'type' => 'text',
                         'class' => 'date',
                         'label' => 'End',
                         'name' => 'end',
-                        'value' => $key['end']
+                        'value' => $training['end']
                     ),
                     array(
                         'type' => 'submit',
@@ -494,24 +494,24 @@ function training_edit_form ($tid) {
 }
 
 /**
- * Return the delete key assigment form structure.
+ * Return the delete training record form structure.
  *
- * @param $tid The tid of the key assignment to delete.
+ * @param $tid The tid of the training record to delete.
  * @return The form structure.
 */
 function training_delete_form ($tid) {
     
-    // Ensure user is allowed to delete keys
+    // Ensure user is allowed to delete training records
     if (!user_access('training_delete')) {
         return NULL;
     }
     
-    // Get key data
-    $data = crm_get_data('key', array('tid'=>$tid));
-    $key = $data[0];
+    // Get training data
+    $data = crm_get_data('training', array('tid'=>$tid));
+    $training = $data[0];
     
-    // Construct key name
-    $training_name = "key:$key[tid] serial:$key[serial] $key[start] -- $key[end]";
+    // Construct training name
+    $training_name = "training:$training[tid] serial:$training[serial] $training[start] -- $training[end]";
     
     // Create form structure
     $form = array(
@@ -519,16 +519,16 @@ function training_delete_form ($tid) {
         'method' => 'post',
         'command' => 'training_delete',
         'hidden' => array(
-            'tid' => $key['tid']
+            'tid' => $training['tid']
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Delete Key',
+                'label' => 'Delete Training Record',
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the key assignment "' . $training_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the training record "' . $training_name . '"? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -553,13 +553,13 @@ function training_delete_form ($tid) {
 function training_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'keys';
+            $params['tab'] = 'Keys';
             break;
     }
 }
 
 /**
- * Handle key add request.
+ * Handle training add request.
  *
  * @return The url to display on completion.
  */
@@ -567,14 +567,14 @@ function command_training_add() {
     // Verify permissions
     if (!user_access('training_edit')) {
         error_register('Permission denied: training_edit');
-        return crm_url('key&tid=' . $_POST['tid']);
+        return crm_url('training&tid=' . $_POST['tid']);
     }
     training_save($_POST);
     return crm_url('contact&cid=' . $_POST['cid'] . '&tab=keys');
 }
 
 /**
- * Handle key update request.
+ * Handle training record update request.
  *
  * @return The url to display on completion.
  */
@@ -582,15 +582,15 @@ function command_training_update() {
     // Verify permissions
     if (!user_access('training_edit')) {
         error_register('Permission denied: training_edit');
-        return crm_url('key&tid=' . $_POST['tid']);
+        return crm_url('training&tid=' . $_POST['tid']);
     }
-    // Save key
+    // Save training record
     training_save($_POST);
-    return crm_url('key&tid=' . $_POST['tid'] . '&tab=edit');
+    return crm_url('training&tid=' . $_POST['tid'] . '&tab=edit');
 }
 
 /**
- * Handle key delete request.
+ * Handle training record delete request.
  *
  * @return The url to display on completion.
  */
@@ -599,7 +599,7 @@ function command_training_delete() {
     // Verify permissions
     if (!user_access('training_delete')) {
         error_register('Permission denied: training_delete');
-        return crm_url('key&tid=' . $esc_post['tid']);
+        return crm_url('training&tid=' . $esc_post['tid']);
     }
     training_delete($_POST);
     return crm_url('members');
@@ -613,7 +613,7 @@ function command_training_delete() {
 function training_page_list () {
     $pages = array();
     if (user_access('training_view')) {
-        $pages[] = 'keys';
+        $pages[] = 'Keys';
     }
     return $pages;
 }
@@ -637,7 +637,7 @@ function training_page (&$page_data, $page_name, $options) {
                 return;
             }
             
-            // Add keys tab
+            // Add Keys tab
             if (user_access('training_view') || user_access('training_edit') || user_access('training_delete') || $cid == user_id()) {
                 $keys = theme('table', 'key', array('cid' => $cid));
                 $keys .= theme('training_add_form', $cid);
@@ -677,9 +677,9 @@ function training_page (&$page_data, $page_name, $options) {
 // Themeing ////////////////////////////////////////////////////////////////////
 
 /**
- * Return the themed html for an add key assignment form.
+ * Return the themed html for an add training record form.
  *
- * @param $cid The id of the contact to add a key assignment for.
+ * @param $cid The id of the contact to add a training record for.
  * @return The themed html string.
  */
 function theme_training_add_form ($cid) {
@@ -687,9 +687,9 @@ function theme_training_add_form ($cid) {
 }
 
 /**
- * Return themed html for an edit key assignment form.
+ * Return themed html for an edit training record form.
  *
- * @param $tid The tid of the key assignment to edit.
+ * @param $tid The tid of the training record to edit.
  * @return The themed html string.
  */
 function theme_training_edit_form ($tid) {
