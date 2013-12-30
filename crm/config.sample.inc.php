@@ -67,8 +67,11 @@ $config_modules = array(
 
 // Optional modules, uncomment to enable
 
+// Track Member Training
+$config_module[] = "training";
+
 // Track RFID key serial numbers
-//$config_modules[] = "key";
+$config_modules[] = "key";
 
 // Track user meta data
 //$config_modules[] = "user_meta";
@@ -80,7 +83,7 @@ $config_modules = array(
 $config_modules[] = "payment";
 
 // Amazon payment integration
-$config_modules[] = "amazon_payment";
+//$config_modules[] = "amazon_payment";
 
 // Paypal integration
 //$config_modules[] = "paypal_payment";
@@ -89,7 +92,7 @@ $config_modules[] = "amazon_payment";
 $config_modules[] = "billing";
 
 // Assign a profile picture using gravatar 
-//$config_modules[] = "profile_picture";
+$config_modules[] = "profile_picture";
 
 // Assign members a mentor 
 //$config_modules[] = "mentor";
@@ -103,6 +106,7 @@ $config_links = array(
     , 'members' => 'Members'
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
+    , 'training' => 'Training'
     , 'user_metas' => 'User Meta Data'
     , 'plan_metas' => 'Plan Meta Data'
     , 'payments' => 'Payments'
