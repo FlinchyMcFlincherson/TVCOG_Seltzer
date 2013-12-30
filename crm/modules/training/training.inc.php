@@ -27,7 +27,7 @@
  * this number.
  */
 function training_revision () {
-    return 2;
+    return 1;
 }
 
 /**
@@ -62,7 +62,7 @@ function training_install($old_revision = 0) {
         if (!$res) die(mysql_error());
     }
     // Permissions moved to DB, set defaults on install/upgrade
-    if ($old_revision < 2) {
+/*    if ($old_revision < 1) {
         // Set default permissions
         $roles = array(
             '1' => 'authenticated'
@@ -88,7 +88,7 @@ function training_install($old_revision = 0) {
                     if (!$res) die(mysql_error());
                 }
             }
-        }
+        }*/
     }
 }
 
