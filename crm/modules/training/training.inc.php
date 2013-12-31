@@ -88,8 +88,8 @@ function training_install($old_revision = 0) {
                     if (!$res) die(mysql_error());
                 }
             }
-        }*/
-    }
+        }
+    }*/
 }
 
 // Utility functions ///////////////////////////////////////////////////////////
