@@ -4,7 +4,7 @@
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
     
     This file is part of the Seltzer CRM Project
-    key.inc.php - Key tracking module
+    discount.inc.php - Discount tracking module
 
     Seltzer is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,18 +26,18 @@
  * @return This module's revision number.  Each new release should increment
  * this number.
  */
-function key_revision () {
+function discount_revision () {
     return 2;
 }
 
 /**
  * @return An array of the permissions provided by this module.
  */
-function key_permissions () {
+function discount_permissions () {
     return array(
-        'key_view'
-        , 'key_edit'
-        , 'key_delete'
+        'discount_view'
+        , 'discount_edit'
+        , 'discount_delete'
     );
 }
 
@@ -46,10 +46,10 @@ function key_permissions () {
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
  */
-function key_install($old_revision = 0) {
+function discount_install($old_revision = 0) {
     if ($old_revision < 1) {
         $sql = '
-            CREATE TABLE IF NOT EXISTS `key` (
+            CREATE TABLE IF NOT EXISTS `discount` (
               `kid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
               `start` date DEFAULT NULL,
@@ -75,8 +75,8 @@ function key_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('key_view', 'key_edit', 'key_delete')
-            , 'webAdmin' => array('key_view', 'key_edit', 'key_delete')
+            'director' => array('discount_view', 'discount_edit', 'discount_delete')
+            , 'webAdmin' => array('discount_view', 'discount_edit', 'discount_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -95,23 +95,23 @@ function key_install($old_revision = 0) {
 // Utility functions ///////////////////////////////////////////////////////////
 
 /**
- * Generate a descriptive string for a single key.
+ * Generate a descriptive string for a single discount.
  *
- * @param $kid The kid of the key to describe.
+ * @param $kid The kid of the discount to describe.
  * @return The description string.
  */
-function key_description ($kid) {
+function discount_description ($kid) {
     
-    // Get key data
-    $data = crm_get_data('key', array('kid' => $kid));
+    // Get discount data
+    $data = crm_get_data('discount', array('kid' => $kid));
     if (empty($data)) {
         return '';
     }
-    $key = $data[0];
+    $discount = $data[0];
     
     // Construct description
-    $description = 'Key ';
-    $description .= $key['serial'];
+    $description = 'Discount ';
+    $description .= $discount['serial'];
     
     return $description;
 }
@@ -119,14 +119,14 @@ function key_description ($kid) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
- * Return data for one or more key card assignments.
+ * Return data for one or more discount records.
  *
  * @param $opts An associative array of options, possible keys are:
- *   'kid' If specified, returns a single memeber with the matching key id;
- *   'cid' If specified, returns all keys assigned to the contact with specified id;
+ *   'kid' If specified, returns a single memeber with the matching discount id;
+ *   'cid' If specified, returns all discounts assigned to the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the key table.
- * @return An array with each element representing a single key card assignment.
+ *   'join' A list of tables to join to the discount table.
+ * @return An array with each element representing a single discount record.
 */ 
 function key_data ($opts = array()) {
     // Query database
