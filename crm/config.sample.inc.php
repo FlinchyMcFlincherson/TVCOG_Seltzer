@@ -67,9 +67,6 @@ $config_modules = array(
 
 // Optional modules, uncomment to enable
 
-// Track Member Training
-$config_module[] = "training";
-
 // Track RFID key serial numbers
 $config_modules[] = "key";
 
@@ -97,6 +94,12 @@ $config_modules[] = "profile_picture";
 // Assign members a mentor 
 //$config_modules[] = "mentor";
 
+// Track Member Training
+$config_module[] = "training";
+
+// Track Member Training
+$config_module[] = "discounts";
+
 // Developer tools
 //$config_modules[] = "devel";
 
@@ -107,6 +110,7 @@ $config_links = array(
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
     , 'training' => 'Training'
+    , 'discounts' => 'Discounts'
     , 'user_metas' => 'User Meta Data'
     , 'plan_metas' => 'Plan Meta Data'
     , 'payments' => 'Payments'
