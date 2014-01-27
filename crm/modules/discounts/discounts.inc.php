@@ -27,7 +27,7 @@
  * this number.
  */
 function discount_revision () {
-    return 2;
+    return 1;
 }
 
 /**
@@ -62,7 +62,7 @@ function discount_install($old_revision = 0) {
         if (!$res) die(mysql_error());
     }
     // Permissions moved to DB, set defaults on install/upgrade
-    if ($old_revision < 2) {
+/*    if ($old_revision < 2) {
         // Set default permissions
         $roles = array(
             '1' => 'authenticated'
@@ -89,7 +89,7 @@ function discount_install($old_revision = 0) {
                 }
             }
         }
-    }
+    }*/
 }
 
 // Utility functions ///////////////////////////////////////////////////////////
