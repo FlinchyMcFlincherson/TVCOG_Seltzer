@@ -128,7 +128,7 @@ function discount_description ($did) {
  *   'join' A list of tables to join to the discount table.
  * @return An array with each element representing a single discount record.
 */ 
-function key_data ($opts = array()) {
+function discount_data ($opts = array()) {
     // Query database
     $sql = "
         SELECT
@@ -137,7 +137,7 @@ function key_data ($opts = array()) {
         , `start`
         , `end`
         , `serial`
-        FROM `key`
+        FROM `discount`
         WHERE 1";
     if (!empty($opts['did'])) {
         $esc_did = mysql_real_escape_string($opts['did']);
@@ -174,15 +174,15 @@ function key_data ($opts = array()) {
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
-    $keys = array();
+    $discounts = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
         // Contents of row are did, cid, start, end, serial
-        $keys[] = $row;
+        $discounts[] = $row;
         $row = mysql_fetch_assoc($res);
     }
     // Return data
-    return $keys;
+    return $discounts;
 }
 
 /**
@@ -192,7 +192,7 @@ function key_data ($opts = array()) {
  * @param $opts An associative array of options.
  * @return An array of modified structures.
  */
-function key_data_alter ($type, $data = array(), $opts = array()) {
+function discount_data_alter ($type, $data = array(), $opts = array()) {
     switch ($type) {
         case 'contact':
             // Get cids of all contacts passed into $data
@@ -201,20 +201,20 @@ function key_data_alter ($type, $data = array(), $opts = array()) {
                 $cids[] = $contact['cid'];
             }
             // Add the cids to the options
-            $key_opts = $opts;
-            $key_opts['cid'] = $cids;
-            // Get an array of key structures for each cid
-            $key_data = crm_get_data('key', $key_opts);
-            // Create a map from cid to an array of key structures
-            $cid_to_keys = array();
-            foreach ($key_data as $key) {
-                $cid_to_keys[$key['cid']][] = $key;
+            $discount_opts = $opts;
+            $discount_opts['cid'] = $cids;
+            // Get an array of discount structures for each cid
+            $discount_data = crm_get_data('discount', $discount_opts);
+            // Create a map from cid to an array of discount structures
+            $cid_to_discounts = array();
+            foreach ($discount_data as $discount) {
+                $cid_to_discounts[$discount['cid']][] = $discount;
             }
-            // Add key structures to the contact structures
+            // Add discount structures to the contact structures
             foreach ($data as $i => $contact) {
-                if (array_key_exists($contact['cid'], $cid_to_keys)) {
-                    $keys = $cid_to_keys[$contact['cid']];
-                    $data[$i]['keys'] = $keys;
+                if (array_key_exists($contact['cid'], $cid_to_discounts)) {
+                    $discounts = $cid_to_discounts[$contact['cid']];
+                    $data[$i]['discounts'] = $discounts;
                 }
             }
             break;
@@ -223,78 +223,78 @@ function key_data_alter ($type, $data = array(), $opts = array()) {
 }
 
 /**
- * Save a key structure.  If $key has a 'did' element, an existing key will
- * be updated, otherwise a new key will be created.
- * @param $did The key structure
- * @return The key structure with as it now exists in the database.
+ * Save a discount structure.  If $discount has a 'did' element, an existing discount will
+ * be updated, otherwise a new discount will be created.
+ * @param $did The discount structure
+ * @return The discount structure with as it now exists in the database.
  */
-function key_save ($key) {
+function discount_save ($discount) {
     // Escape values
     $fields = array('did', 'cid', 'serial', 'start', 'end');
-    if (isset($key['did'])) {
-        // Update existing key
-        $did = $key['did'];
+    if (isset($discount['did'])) {
+        // Update existing discount
+        $did = $discount['did'];
         $esc_did = mysql_real_escape_string($did);
         $clauses = array();
         foreach ($fields as $k) {
-            if ($k == 'end' && empty($key[$k])) {
+            if ($k == 'end' && empty($discount[$k])) {
                 continue;
             }
-            if (isset($key[$k]) && $k != 'did') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($key[$k]) . "' ";
+            if (isset($discount[$k]) && $k != 'did') {
+                $clauses[] = "`$k`='" . mysql_real_escape_string($discount[$k]) . "' ";
             }
         }
-        $sql = "UPDATE `key` SET " . implode(', ', $clauses) . " ";
+        $sql = "UPDATE `discount` SET " . implode(', ', $clauses) . " ";
         $sql .= "WHERE `did`='$esc_did'";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
-        message_register('Key updated');
+        message_register('Discount updated');
     } else {
-        // Insert new key
+        // Insert new discount
         $cols = array();
         $values = array();
         foreach ($fields as $k) {
-            if (isset($key[$k])) {
-                if ($k == 'end' && empty($key[$k])) {
+            if (isset($discount[$k])) {
+                if ($k == 'end' && empty($discount[$k])) {
                     continue;
                 }
                 $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($key[$k]) . "'";
+                $values[] = "'" . mysql_real_escape_string($discount[$k]) . "'";
             }
         }
-        $sql = "INSERT INTO `key` (" . implode(', ', $cols) . ") ";
+        $sql = "INSERT INTO `discount` (" . implode(', ', $cols) . ") ";
         $sql .= " VALUES (" . implode(', ', $values) . ")";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
         $did = mysql_insert_id();
-        message_register('Key added');
+        message_register('Discount added');
     }
-    return crm_get_one('key', array('did'=>$did));
+    return crm_get_one('discount', array('did'=>$did));
 }
 
 /**
- * Delete a key.
- * @param $key The key data structure to delete, must have a 'did' element.
+ * Delete a discount.
+ * @param $discount The discount data structure to delete, must have a 'did' element.
  */
-function key_delete ($key) {
-    $esc_did = mysql_real_escape_string($key['did']);
-    $sql = "DELETE FROM `key` WHERE `did`='$esc_did'";
+function discount_delete ($discount) {
+    $esc_did = mysql_real_escape_string($discount['did']);
+    $sql = "DELETE FROM `discount` WHERE `did`='$esc_did'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Key deleted.');
+        message_register('Discount deleted.');
     }
 }
 
 // Table data structures ///////////////////////////////////////////////////////
 
 /**
- * Return a table structure for a table of key assignments.
+ * Return a table structure for a table of discount assignments.
  *
- * @param $opts The options to pass to key_data().
+ * @param $opts The options to pass to discount_data().
  * @return The table structure.
 */
-function key_table ($opts) {
+function discount_table ($opts) {
     // Determine settings
     $export = false;
     foreach ($opts as $option => $value) {
@@ -304,8 +304,8 @@ function key_table ($opts) {
                 break;
         }
     }
-    // Get key data
-    $data = crm_get_data('key', $opts);
+    // Get discount data
+    $data = crm_get_data('discount', $opts);
     if (count($data) < 1) {
         return array();
     }
@@ -324,37 +324,37 @@ function key_table ($opts) {
         "columns" => array()
     );
     // Add columns
-    if (user_access('key_view') || $opts['cid'] == user_id()) {
+    if (user_access('discount_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Serial', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Start', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'End', 'class'=>'', 'id'=>'');
     }
     // Add ops column
-    if (!$export && (user_access('key_edit') || user_access('key_delete'))) {
+    if (!$export && (user_access('discount_edit') || user_access('discount_delete'))) {
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
     // Add rows
-    foreach ($data as $key) {
-        // Add key data
+    foreach ($data as $discount) {
+        // Add discount data
         $row = array();
-        if (user_access('key_view') || $opts['cid'] == user_id()) {
+        if (user_access('discount_view') || $opts['cid'] == user_id()) {
             // Add cells
-            $row[] = theme('contact_name', $cid_to_contact[$key['cid']], true);
-            $row[] = $key['serial'];
-            $row[] = $key['start'];
-            $row[] = $key['end'];
+            $row[] = theme('contact_name', $cid_to_contact[$discount['cid']], true);
+            $row[] = $discount['serial'];
+            $row[] = $discount['start'];
+            $row[] = $discount['end'];
         }
-        if (!$export && (user_access('key_edit') || user_access('key_delete'))) {
+        if (!$export && (user_access('discount_edit') || user_access('discount_delete'))) {
             // Construct ops array
             $ops = array();
             // Add edit op
-            if (user_access('key_edit')) {
-                $ops[] = '<a href=' . crm_url('key&did=' . $key['did'] . '#tab-edit') . '>edit</a> ';
+            if (user_access('discount_edit')) {
+                $ops[] = '<a href=' . crm_url('discount&did=' . $discount['did'] . '#tab-edit') . '>edit</a> ';
             }
             // Add delete op
-            if (user_access('key_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=key&id=' . $key['did']) . '>delete</a>';
+            if (user_access('discount_delete')) {
+                $ops[] = '<a href=' . crm_url('delete&type=discount&id=' . $discount['did']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -367,15 +367,15 @@ function key_table ($opts) {
 // Forms ///////////////////////////////////////////////////////////////////////
 
 /**
- * Return the form structure for the add key assignment form.
+ * Return the form structure for the add discount assignment form.
  *
- * @param The cid of the contact to add a key assignment for.
+ * @param The cid of the contact to add a discount assignment for.
  * @return The form structure.
 */
-function key_add_form ($cid) {
+function discount_add_form ($cid) {
     
-    // Ensure user is allowed to edit keys
-    if (!user_access('key_edit')) {
+    // Ensure user is allowed to edit discounts
+    if (!user_access('discount_edit')) {
         return NULL;
     }
     
@@ -383,14 +383,14 @@ function key_add_form ($cid) {
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_add',
+        'command' => 'discount_add',
         'hidden' => array(
             'cid' => $cid
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Add Key Assignment',
+                'label' => 'Add Discount Record',
                 'fields' => array(
                     array(
                         'type' => 'text',
@@ -423,44 +423,44 @@ function key_add_form ($cid) {
 }
 
 /**
- * Return the form structure for an edit key assignment form.
+ * Return the form structure for an edit discount record form.
  *
- * @param $did The did of the key assignment to edit.
+ * @param $did The did of the discount record to edit.
  * @return The form structure.
 */
-function key_edit_form ($did) {
-    // Ensure user is allowed to edit key
-    if (!user_access('key_edit')) {
+function discount_edit_form ($did) {
+    // Ensure user is allowed to edit discounts
+    if (!user_access('discount_edit')) {
         return NULL;
     }
-    // Get key data
-    $data = crm_get_data('key', array('did'=>$did));
-    $key = $data[0];
-    if (empty($key) || count($key) < 1) {
+    // Get discount data
+    $data = crm_get_data('discount', array('did'=>$did));
+    $discount = $data[0];
+    if (empty($discount) || count($discount) < 1) {
         return array();
     }
     // Get corresponding contact data
-    $contact = crm_get_one('contact', array('cid'=>$key['cid']));
+    $contact = crm_get_one('contact', array('cid'=>$discount['cid']));
     // Construct member name
     $name = theme('contact_name', $contact, true);
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_update',
+        'command' => 'discount_update',
         'hidden' => array(
             'did' => $did
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Edit Key Info',
+                'label' => 'Edit Discount Info',
                 'fields' => array(
                     array(
                         'type' => 'text',
                         'label' => 'Serial',
                         'name' => 'serial',
-                        'value' => $key['serial']
+                        'value' => $discount['serial']
                     ),
                     array(
                         'type' => 'readonly',
@@ -472,14 +472,14 @@ function key_edit_form ($did) {
                         'class' => 'date',
                         'label' => 'Start',
                         'name' => 'start',
-                        'value' => $key['start']
+                        'value' => $discount['start']
                     ),
                     array(
                         'type' => 'text',
                         'class' => 'date',
                         'label' => 'End',
                         'name' => 'end',
-                        'value' => $key['end']
+                        'value' => $discount['end']
                     ),
                     array(
                         'type' => 'submit',
@@ -494,41 +494,41 @@ function key_edit_form ($did) {
 }
 
 /**
- * Return the delete key assigment form structure.
+ * Return the delete discount record form structure.
  *
- * @param $did The did of the key assignment to delete.
+ * @param $did The did of the discount record to delete.
  * @return The form structure.
 */
-function key_delete_form ($did) {
+function discount_delete_form ($did) {
     
-    // Ensure user is allowed to delete keys
-    if (!user_access('key_delete')) {
+    // Ensure user is allowed to delete discounts
+    if (!user_access('discount_delete')) {
         return NULL;
     }
     
-    // Get key data
-    $data = crm_get_data('key', array('did'=>$did));
-    $key = $data[0];
+    // Get discount data
+    $data = crm_get_data('discount', array('did'=>$did));
+    $discount = $data[0];
     
-    // Construct key name
-    $key_name = "key:$key[did] serial:$key[serial] $key[start] -- $key[end]";
+    // Construct discount name
+    $discount_name = "Discount:$discount[did] serial:$discount[serial] $discount[start] -- $discount[end]";
     
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_delete',
+        'command' => 'discount_delete',
         'hidden' => array(
-            'did' => $key['did']
+            'did' => $discount['did']
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Delete Key',
+                'label' => 'Delete Discount',
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the key assignment "' . $key_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the discount record "' . $discount_name . '"? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -550,58 +550,58 @@ function key_delete_form ($did) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function key_command ($command, &$url, &$params) {
+function discount_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'keys';
+            $params['tab'] = 'discounts';
             break;
     }
 }
 
 /**
- * Handle key add request.
+ * Handle discount add request.
  *
  * @return The url to display on completion.
  */
-function command_key_add() {
+function command_discount_add() {
     // Verify permissions
-    if (!user_access('key_edit')) {
-        error_register('Permission denied: key_edit');
-        return crm_url('key&did=' . $_POST['did']);
+    if (!user_access('discount_edit')) {
+        error_register('Permission denied: discount_edit');
+        return crm_url('discount&did=' . $_POST['did']);
     }
-    key_save($_POST);
-    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=keys');
+    discount_save($_POST);
+    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=discounts');
 }
 
 /**
- * Handle key update request.
+ * Handle discount update request.
  *
  * @return The url to display on completion.
  */
-function command_key_update() {
+function command_discount_update() {
     // Verify permissions
-    if (!user_access('key_edit')) {
-        error_register('Permission denied: key_edit');
-        return crm_url('key&did=' . $_POST['did']);
+    if (!user_access('discount_edit')) {
+        error_register('Permission denied: discount_edit');
+        return crm_url('discount&did=' . $_POST['did']);
     }
-    // Save key
-    key_save($_POST);
-    return crm_url('key&did=' . $_POST['did'] . '&tab=edit');
+    // Save discount
+    discount_save($_POST);
+    return crm_url('discount&did=' . $_POST['did'] . '&tab=edit');
 }
 
 /**
- * Handle key delete request.
+ * Handle discount delete request.
  *
  * @return The url to display on completion.
  */
-function command_key_delete() {
+function command_discount_delete() {
     global $esc_post;
     // Verify permissions
-    if (!user_access('key_delete')) {
-        error_register('Permission denied: key_delete');
-        return crm_url('key&did=' . $esc_post['did']);
+    if (!user_access('discount_delete')) {
+        error_register('Permission denied: discount_delete');
+        return crm_url('discount&did=' . $esc_post['did']);
     }
-    key_delete($_POST);
+    discount_delete($_POST);
     return crm_url('members');
 }
 
@@ -610,10 +610,10 @@ function command_key_delete() {
 /**
  * @return An array of pages provided by this module.
  */
-function key_page_list () {
+function discount_page_list () {
     $pages = array();
-    if (user_access('key_view')) {
-        $pages[] = 'keys';
+    if (user_access('discount_view')) {
+        $pages[] = 'discounts';
     }
     return $pages;
 }
@@ -625,7 +625,7 @@ function key_page_list () {
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
 */
-function key_page (&$page_data, $page_name, $options) {
+function discount_page (&$page_data, $page_name, $options) {
     
     switch ($page_name) {
         
@@ -637,37 +637,37 @@ function key_page (&$page_data, $page_name, $options) {
                 return;
             }
             
-            // Add keys tab
-            if (user_access('key_view') || user_access('key_edit') || user_access('key_delete') || $cid == user_id()) {
-                $keys = theme('table', 'key', array('cid' => $cid));
-                $keys .= theme('key_add_form', $cid);
-                page_add_content_bottom($page_data, $keys, 'Keys');
+            // Add discounts tab
+            if (user_access('discount_view') || user_access('discount_edit') || user_access('discount_delete') || $cid == user_id()) {
+                $discounts = theme('table', 'discount', array('cid' => $cid));
+                $discounts .= theme('discount_add_form', $cid);
+                page_add_content_bottom($page_data, $discounts, 'Discounts');
             }
             
             break;
         
-        case 'keys':
-            page_set_title($page_data, 'Keys');
-            if (user_access('key_view')) {
-                $keys = theme('table', 'key', array('join'=>array('contact', 'member'), 'show_export'=>true));
-                page_add_content_top($page_data, $keys, 'View');
+        case 'discounts':
+            page_set_title($page_data, 'Discounts');
+            if (user_access('discount_view')) {
+                $discounts = theme('table', 'discount', array('join'=>array('contact', 'member'), 'show_export'=>true));
+                page_add_content_top($page_data, $discounts, 'View');
             }
             break;
         
-        case 'key':
+        case 'discount':
             
-            // Capture key id
+            // Capture discount id
             $did = $options['did'];
             if (empty($did)) {
                 return;
             }
             
             // Set page title
-            page_set_title($page_data, key_description($did));
+            page_set_title($page_data, discount_description($did));
             
             // Add edit tab
-            if (user_access('key_view') || user_access('key_edit') || user_access('key_delete')) {
-                page_add_content_top($page_data, theme('key_edit_form', $did), 'Edit');
+            if (user_access('discount_view') || user_access('discount_edit') || user_access('discount_delete')) {
+                page_add_content_top($page_data, theme('discount_edit_form', $did), 'Edit');
             }
             
             break;
@@ -677,23 +677,23 @@ function key_page (&$page_data, $page_name, $options) {
 // Themeing ////////////////////////////////////////////////////////////////////
 
 /**
- * Return the themed html for an add key assignment form.
+ * Return the themed html for an add discount record form.
  *
- * @param $cid The id of the contact to add a key assignment for.
+ * @param $cid The id of the contact to add a discount record for.
  * @return The themed html string.
  */
-function theme_key_add_form ($cid) {
-    return theme('form', crm_get_form('key_add', $cid));
+function theme_discount_add_form ($cid) {
+    return theme('form', crm_get_form('discount_add', $cid));
 }
 
 /**
- * Return themed html for an edit key assignment form.
+ * Return themed html for an edit discount assignment form.
  *
- * @param $did The did of the key assignment to edit.
+ * @param $did The did of the discount assignment to edit.
  * @return The themed html string.
  */
-function theme_key_edit_form ($did) {
-    return theme('form', crm_get_form('key_edit', $did));
+function theme_discount_edit_form ($did) {
+    return theme('form', crm_get_form('discount_edit', $did));
 }
 
 ?>
