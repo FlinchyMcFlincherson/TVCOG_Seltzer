@@ -236,12 +236,12 @@ function discount_save ($discount) {
         $did = $discount['did'];
         $esc_did = mysql_real_escape_string($did);
         $clauses = array();
-        foreach ($fields as $k) {
-            if ($k == 'end' && empty($discount[$k])) {
+        foreach ($fields as $d) {
+            if ($d == 'end' && empty($discount[$d])) {
                 continue;
             }
-            if (isset($discount[$k]) && $k != 'did') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($discount[$k]) . "' ";
+            if (isset($discount[$d]) && $d != 'did') {
+                $clauses[] = "`$d`='" . mysql_real_escape_string($discount[$d]) . "' ";
             }
         }
         $sql = "UPDATE `discount` SET " . implode(', ', $clauses) . " ";
@@ -253,13 +253,13 @@ function discount_save ($discount) {
         // Insert new discount
         $cols = array();
         $values = array();
-        foreach ($fields as $k) {
-            if (isset($discount[$k])) {
-                if ($k == 'end' && empty($discount[$k])) {
+        foreach ($fields as $d) {
+            if (isset($discount[$d])) {
+                if ($d == 'end' && empty($discount[$d])) {
                     continue;
                 }
-                $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($discount[$k]) . "'";
+                $cols[] = "`$d`";
+                $values[] = "'" . mysql_real_escape_string($discount[$d]) . "'";
             }
         }
         $sql = "INSERT INTO `discount` (" . implode(', ', $cols) . ") ";
