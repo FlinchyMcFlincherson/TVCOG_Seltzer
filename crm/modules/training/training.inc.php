@@ -553,7 +553,7 @@ function training_delete_form ($tid) {
 function training_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'Training';
+            $params['tab'] = 'trainings';
             break;
     }
 }
@@ -570,7 +570,7 @@ function command_training_add() {
         return crm_url('training&tid=' . $_POST['tid']);
     }
     training_save($_POST);
-    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=training');
+    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=trainings');
 }
 
 /**
@@ -613,7 +613,7 @@ function command_training_delete() {
 function training_page_list () {
     $pages = array();
     if (user_access('training_view')) {
-        $pages[] = 'Training';
+        $pages[] = 'trainings';
     }
     return $pages;
 }
@@ -637,19 +637,19 @@ function training_page (&$page_data, $page_name, $options) {
                 return;
             }
             
-            // Add training tab
+            // Add trainings tab
             if (user_access('training_view') || user_access('training_edit') || user_access('training_delete') || $cid == user_id()) {
-                $training = theme('table', 'training', array('cid' => $cid));
-                $training .= theme('training_add_form', $cid);
-                page_add_content_bottom($page_data, $training, 'Training');
+                $trainings = theme('table', 'training', array('cid' => $cid));
+                $trainings .= theme('training_add_form', $cid);
+                page_add_content_bottom($page_data, $trainings, 'Trainings');
             }
             
             break;
         
         case 'trainings':
-            page_set_title($page_data, 'Training');
+            page_set_title($page_data, 'Trainings');
             if (user_access('training_view')) {
-                $training = theme('table', 'training', array('join'=>array('contact', 'member'), 'show_export'=>true));
+                $trainings = theme('table', 'training', array('join'=>array('contact', 'member'), 'show_export'=>true));
                 page_add_content_top($page_data, $training, 'View');
             }
             break;
