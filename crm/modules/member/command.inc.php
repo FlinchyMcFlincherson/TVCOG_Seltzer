@@ -453,7 +453,7 @@ function command_member_import () {
         $email = mysql_real_escape_string($row['email']);
         $phone = mysql_real_escape_string($row['phone']);
         $over18 = intval($row['over18']);
-        $emergencyName = mysql_real_escape_string($row['emergencycontact']);
+        $emergencyName = mysql_real_escape_string($row['emergencyname']);
         $emergencyRelation = mysql_real_escape_string($row['emergencyrelation']);
         $emergencyPhone = mysql_real_escape_string($row['emergencyphone']);
         $emergencyEmail = mysql_real_escape_string($row['emergencyemail']);

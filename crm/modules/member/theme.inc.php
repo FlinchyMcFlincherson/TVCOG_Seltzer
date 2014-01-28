@@ -335,7 +335,7 @@ function theme_member_created_email ($cid) {
     $output .= "Email: $contact[email]<br/>\n";
     $output .= "Phone: $contact[phone]\n</p>\n";
     $output .= "Over 18?: $contact[over18]<br/>\n";
-    $output .= "Emergency Contact: $contact[emergencyContact]<br/>\n";
+    $output .= "Emergency Contact: $contact[emergencyName]<br/>\n";
     $output .= "Emergency Contact Relation: $contact[emergencyRelation]<br/>\n";
     $output .= "Emergency Contact Phone: $contact[emergencyPhone]<br/>\n";
     $output .= "Emergency Contact Email: $contact[emergencyEmail]<br/>\n";
