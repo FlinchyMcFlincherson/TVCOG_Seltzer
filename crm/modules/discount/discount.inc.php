@@ -45,6 +45,15 @@ function discount_permissions () {
  * Install or upgrade this module.
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
+ *
+ * Discounts Table Fields (Per TTongue):
+ *  -Discount Trans ID
+ *  -User ID (Contact ID)
+ *  -Date Applied
+ *  -Amount
+ *  -Applied By
+ *  -Reason
+ *  -Invoice/Bill ID (Braintree Trans ID)
  */
 function discount_install($old_revision = 0) {
     if ($old_revision < 1) {
@@ -52,9 +61,11 @@ function discount_install($old_revision = 0) {
             CREATE TABLE IF NOT EXISTS `discount` (
               `did` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
-              `start` date DEFAULT NULL,
-              `end` date DEFAULT NULL,
-              `serial` varchar(255) NOT NULL,
+              `amount` mediumint(8) unsigned NOT NULL,
+              `reason` varchar(255) NOT NULL,
+              `invoiceID` varchar(255) NOT NULL,
+              `appliedOn` date DEFAULT NULL,
+              `appliedBy` varchar(255) NOT NULL,
               PRIMARY KEY (`did`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
@@ -110,8 +121,8 @@ function discount_description ($did) {
     $discount = $data[0];
     
     // Construct description
-    $description = 'Discount ';
-    $description .= $discount['serial'];
+    $description = 'DISCOUNT RECORD: ';
+    $description .= $discount['did'];
     
     return $description;
 }
@@ -134,9 +145,11 @@ function discount_data ($opts = array()) {
         SELECT
         `did`
         , `cid`
-        , `start`
-        , `end`
-        , `serial`
+        , `amount`
+        , `reason`
+        , `invoiceID`
+        , `appliedOn`
+        , `appliedBy`
         FROM `discount`
         WHERE 1";
     if (!empty($opts['did'])) {
@@ -161,23 +174,23 @@ function discount_data ($opts = array()) {
             switch ($name) {
                 case 'active':
                     if ($param) {
-                        $sql .= " AND (`start` IS NOT NULL AND `end` IS NULL)";
+                        $sql .= " AND (`appliedOn` IS NOT NULL AND `invoiceID` IS NULL)";
                     } else {
-                        $sql .= " AND (`start` IS NULL OR `end` IS NOT NULL)";
+                        $sql .= " AND (`appliedOn` IS NULL OR `invoiceID` IS NOT NULL)";
                     }
                     break;
             }
         }
     }
     $sql .= "
-        ORDER BY `start`, `did` ASC";
+        ORDER BY `appliedOn`, `did` ASC";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
     $discounts = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
-        // Contents of row are did, cid, start, end, serial
+        // Contents of row are did, cid, amount, reason, invoiceID, appliedOn, appliedBy
         $discounts[] = $row;
         $row = mysql_fetch_assoc($res);
     }
@@ -230,14 +243,14 @@ function discount_data_alter ($type, $data = array(), $opts = array()) {
  */
 function discount_save ($discount) {
     // Escape values
-    $fields = array('did', 'cid', 'serial', 'start', 'end');
+    $fields = array('did', 'cid', 'amount', 'reason', 'invoiceID', 'appliedOn', 'appliedBy');
     if (isset($discount['did'])) {
         // Update existing discount
         $did = $discount['did'];
         $esc_did = mysql_real_escape_string($did);
         $clauses = array();
         foreach ($fields as $d) {
-            if ($d == 'end' && empty($discount[$d])) {
+            if ($d == 'appliedBy' && empty($discount[$d])) {
                 continue;
             }
             if (isset($discount[$d]) && $d != 'did') {
@@ -255,7 +268,7 @@ function discount_save ($discount) {
         $values = array();
         foreach ($fields as $d) {
             if (isset($discount[$d])) {
-                if ($d == 'end' && empty($discount[$d])) {
+                if ($d == 'appliedBy' && empty($discount[$d])) {
                     continue;
                 }
                 $cols[] = "`$d`";
@@ -325,10 +338,13 @@ function discount_table ($opts) {
     );
     // Add columns
     if (user_access('discount_view') || $opts['cid'] == user_id()) {
+        $table['columns'][] = array("title"=>'Discount ID', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'Serial', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'Start', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'End', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Amount', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Reason', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Invoice ID', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Applied On', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Applied By', 'class'=>'', 'id'=>'');
     }
     // Add ops column
     if (!$export && (user_access('discount_edit') || user_access('discount_delete'))) {
@@ -340,10 +356,13 @@ function discount_table ($opts) {
         $row = array();
         if (user_access('discount_view') || $opts['cid'] == user_id()) {
             // Add cells
+            $row[] = $discount['did'];
             $row[] = theme('contact_name', $cid_to_contact[$discount['cid']], true);
-            $row[] = $discount['serial'];
-            $row[] = $discount['start'];
-            $row[] = $discount['end'];
+            $row[] = $discount['amount'];
+            $row[] = $discount['reason'];
+            $row[] = $discount['invoiceID'];
+            $row[] = $discount['appliedOn'];
+            $row[] = $discount['appliedBy'];
         }
         if (!$export && (user_access('discount_edit') || user_access('discount_delete'))) {
             // Construct ops array
@@ -394,21 +413,30 @@ function discount_add_form ($cid) {
                 'fields' => array(
                     array(
                         'type' => 'text',
-                        'label' => 'Serial',
-                        'name' => 'serial'
+                        'label' => 'Amount',
+                        'name' => 'amount'
                     ),
                     array(
                         'type' => 'text',
-                        'label' => 'Start',
-                        'name' => 'start',
+                        'label' => 'Reason',
+                        'name' => 'reason',
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => 'Invoice ID',
+                        'name' => 'invoiceID',
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => 'Applied On',
+                        'name' => 'appliedOn',
                         'value' => date("Y-m-d"),
                         'class' => 'date'
                     ),
                     array(
                         'type' => 'text',
-                        'label' => 'End',
-                        'name' => 'end',
-                        'class' => 'date'
+                        'label' => 'Applied By',
+                        'name' => 'appliedBy',
                     ),
                     array(
                         'type' => 'submit',
@@ -457,10 +485,9 @@ function discount_edit_form ($did) {
                 'label' => 'Edit Discount Info',
                 'fields' => array(
                     array(
-                        'type' => 'text',
-                        'label' => 'Serial',
-                        'name' => 'serial',
-                        'value' => $discount['serial']
+                        'type' => 'readonly',
+                        'label' => 'Discount ID',
+                        'value' => $discount['did']
                     ),
                     array(
                         'type' => 'readonly',
@@ -469,17 +496,34 @@ function discount_edit_form ($did) {
                     ),
                     array(
                         'type' => 'text',
-                        'class' => 'date',
-                        'label' => 'Start',
-                        'name' => 'start',
-                        'value' => $discount['start']
+                        'label' => 'Amount',
+                        'name' => 'amount',
+                        'value' => $discount['amount']
                     ),
                     array(
                         'type' => 'text',
-                        'class' => 'date',
-                        'label' => 'End',
-                        'name' => 'end',
-                        'value' => $discount['end']
+                        'label' => 'Reason',
+                        'name' => 'reason',
+                        'value' => $discount['reason']
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => 'Invoice ID',
+                        'name' => 'invoiceID',
+                        'value' => $discount['invoiceID']
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => 'Applied On',
+                        'name' => 'appliedOn',
+                        'value' => $discount['appliedOn'],
+                        'class' => 'date'
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => 'Applied By',
+                        'name' => 'appliedBy',
+                        'value' => $discount['appliedBy']
                     ),
                     array(
                         'type' => 'submit',
@@ -511,7 +555,7 @@ function discount_delete_form ($did) {
     $discount = $data[0];
     
     // Construct discount name
-    $discount_name = "Discount:$discount[did] serial:$discount[serial] $discount[start] -- $discount[end]";
+    $discount_name = "Discount ID: $discount[did]\nAmount: $discount[amount]\nReason: $discount[reason]\nInvoice ID: $discount[invoiceID]\nApplied On: $discount[appliedOn]\nApplied By: $discount[appliedBy]";
     
     // Create form structure
     $form = array(
@@ -528,7 +572,7 @@ function discount_delete_form ($did) {
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the discount record "' . $discount_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the discount record:\n' . $discount_name . '\nThis cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
