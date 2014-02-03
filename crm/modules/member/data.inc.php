@@ -460,9 +460,9 @@ function member_membership_save ($membership) {
             $sql .= "`start`=NULL, ";
         }
         if ($esc_end) {
-            $sql .= "`end`='$esc_end' ";
+            $sql .= "`end`='$esc_end', ";
         } else {
-            $sql .= "`end`=NULL ";
+            $sql .= "`end`=NULL, ";
         }
         $sql .= "WHERE `sid`='$esc_sid'";
         $res = mysql_query($sql);
@@ -471,9 +471,9 @@ function member_membership_save ($membership) {
         // Insert
         $sql = "
             INSERT INTO `membership`
-            (`cid`, `pid`, `start`)
+            (`cid`, `pid`, `start`, `end`)
             VALUES
-            ('$esc_cid', '$esc_pid', '$esc_start')
+            ('$esc_cid', '$esc_pid', '$esc_start', '$esc_end')
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
