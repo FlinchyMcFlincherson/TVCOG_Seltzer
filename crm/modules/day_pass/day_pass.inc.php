@@ -4,7 +4,7 @@
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
     
     This file is part of the Seltzer CRM Project
-    key.inc.php - Key tracking module
+    day_pass.inc.php - Day Pass tracking module
 
     Seltzer is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,18 +26,18 @@
  * @return This module's revision number.  Each new release should increment
  * this number.
  */
-function key_revision () {
-    return 2;
+function daypass_revision () {
+    return 1;
 }
 
 /**
  * @return An array of the permissions provided by this module.
  */
-function key_permissions () {
+function daypass_permissions () {
     return array(
-        'key_view'
-        , 'key_edit'
-        , 'key_delete'
+        'daypass_view'
+        , 'daypass_edit'
+        , 'daypass_delete'
     );
 }
 
@@ -46,10 +46,10 @@ function key_permissions () {
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
  */
-function key_install($old_revision = 0) {
+function daypass_install($old_revision = 0) {
     if ($old_revision < 1) {
         $sql = '
-            CREATE TABLE IF NOT EXISTS `key` (
+            CREATE TABLE IF NOT EXISTS `daypass` (
               `kid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
               `start` date DEFAULT NULL,
@@ -75,8 +75,8 @@ function key_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('key_view', 'key_edit', 'key_delete')
-            , 'webAdmin' => array('key_view', 'key_edit', 'key_delete')
+            'director' => array('daypass_view', 'daypass_edit', 'daypass_delete')
+            , 'webAdmin' => array('daypass_view', 'daypass_edit', 'daypass_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -95,23 +95,23 @@ function key_install($old_revision = 0) {
 // Utility functions ///////////////////////////////////////////////////////////
 
 /**
- * Generate a descriptive string for a single key.
+ * Generate a descriptive string for a single day pass.
  *
- * @param $kid The kid of the key to describe.
+ * @param $kid The kid of the day pass to describe.
  * @return The description string.
  */
-function key_description ($kid) {
+function daypass_description ($kid) {
     
-    // Get key data
-    $data = crm_get_data('key', array('kid' => $kid));
+    // Get day pass data
+    $data = crm_get_data('daypass', array('kid' => $kid));
     if (empty($data)) {
         return '';
     }
-    $key = $data[0];
+    $daypass = $data[0];
     
     // Construct description
-    $description = 'Key ';
-    $description .= $key['serial'];
+    $description = 'Day Pass ';
+    $description .= $daypass['serial'];
     
     return $description;
 }
@@ -119,16 +119,16 @@ function key_description ($kid) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
- * Return data for one or more key card assignments.
+ * Return data for one or more day passes.
  *
  * @param $opts An associative array of options, possible keys are:
- *   'kid' If specified, returns a single memeber with the matching key id;
- *   'cid' If specified, returns all keys assigned to the contact with specified id;
+ *   'kid' If specified, returns a single memeber with the matching day pass id;
+ *   'cid' If specified, returns all daypasses assigned to the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the key table.
- * @return An array with each element representing a single key card assignment.
+ *   'join' A list of tables to join to the daypass table.
+ * @return An array with each element representing a single day pass.
 */ 
-function key_data ($opts = array()) {
+function daypass_data ($opts = array()) {
     // Query database
     $sql = "
         SELECT
@@ -137,7 +137,7 @@ function key_data ($opts = array()) {
         , `start`
         , `end`
         , `serial`
-        FROM `key`
+        FROM `daypass`
         WHERE 1";
     if (!empty($opts['kid'])) {
         $esc_kid = mysql_real_escape_string($opts['kid']);
@@ -174,15 +174,15 @@ function key_data ($opts = array()) {
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
-    $keys = array();
+    $daypasses = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
         // Contents of row are kid, cid, start, end, serial
-        $keys[] = $row;
+        $daypasses[] = $row;
         $row = mysql_fetch_assoc($res);
     }
     // Return data
-    return $keys;
+    return $daypasses;
 }
 
 /**
@@ -192,7 +192,7 @@ function key_data ($opts = array()) {
  * @param $opts An associative array of options.
  * @return An array of modified structures.
  */
-function key_data_alter ($type, $data = array(), $opts = array()) {
+function daypass_data_alter ($type, $data = array(), $opts = array()) {
     switch ($type) {
         case 'contact':
             // Get cids of all contacts passed into $data
@@ -201,20 +201,20 @@ function key_data_alter ($type, $data = array(), $opts = array()) {
                 $cids[] = $contact['cid'];
             }
             // Add the cids to the options
-            $key_opts = $opts;
-            $key_opts['cid'] = $cids;
-            // Get an array of key structures for each cid
-            $key_data = crm_get_data('key', $key_opts);
-            // Create a map from cid to an array of key structures
-            $cid_to_keys = array();
-            foreach ($key_data as $key) {
-                $cid_to_keys[$key['cid']][] = $key;
+            $daypass_opts = $opts;
+            $daypass_opts['cid'] = $cids;
+            // Get an array of day pass structures for each cid
+            $daypass_data = crm_get_data('daypass', $daypass_opts);
+            // Create a map from cid to an array of day pass structures
+            $cid_to_daypasses = array();
+            foreach ($daypass_data as $daypass) {
+                $cid_to_daypasses[$daypass['cid']][] = $daypass;
             }
-            // Add key structures to the contact structures
+            // Add day pass structures to the contact structures
             foreach ($data as $i => $contact) {
-                if (array_key_exists($contact['cid'], $cid_to_keys)) {
-                    $keys = $cid_to_keys[$contact['cid']];
-                    $data[$i]['keys'] = $keys;
+                if (array_key_exists($contact['cid'], $cid_to_daypasses)) {
+                    $daypasses = $cid_to_daypasses[$contact['cid']];
+                    $data[$i]['daypasses'] = $daypasses;
                 }
             }
             break;
@@ -223,78 +223,78 @@ function key_data_alter ($type, $data = array(), $opts = array()) {
 }
 
 /**
- * Save a key structure.  If $key has a 'kid' element, an existing key will
- * be updated, otherwise a new key will be created.
- * @param $kid The key structure
- * @return The key structure with as it now exists in the database.
+ * Save a day pass structure.  If $daypass has a 'kid' element, an existing day pass will
+ * be updated, otherwise a new day pass will be created.
+ * @param $kid The day pass structure
+ * @return The day pass structure with as it now exists in the database.
  */
-function key_save ($key) {
+function daypass_save ($daypass) {
     // Escape values
     $fields = array('kid', 'cid', 'serial', 'start', 'end');
-    if (isset($key['kid'])) {
-        // Update existing key
-        $kid = $key['kid'];
+    if (isset($daypass['kid'])) {
+        // Update existing daypass
+        $kid = $daypass['kid'];
         $esc_kid = mysql_real_escape_string($kid);
         $clauses = array();
         foreach ($fields as $k) {
-            if ($k == 'end' && empty($key[$k])) {
+            if ($k == 'end' && empty($daypass[$k])) {
                 continue;
             }
-            if (isset($key[$k]) && $k != 'kid') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($key[$k]) . "' ";
+            if (isset($daypass[$k]) && $k != 'kid') {
+                $clauses[] = "`$k`='" . mysql_real_escape_string($daypass[$k]) . "' ";
             }
         }
-        $sql = "UPDATE `key` SET " . implode(', ', $clauses) . " ";
+        $sql = "UPDATE `daypass` SET " . implode(', ', $clauses) . " ";
         $sql .= "WHERE `kid`='$esc_kid'";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
-        message_register('Key updated');
+        message_register('Day Pass updated');
     } else {
-        // Insert new key
+        // Insert new daypass
         $cols = array();
         $values = array();
         foreach ($fields as $k) {
-            if (isset($key[$k])) {
-                if ($k == 'end' && empty($key[$k])) {
+            if (isset($daypass[$k])) {
+                if ($k == 'end' && empty($daypass[$k])) {
                     continue;
                 }
                 $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($key[$k]) . "'";
+                $values[] = "'" . mysql_real_escape_string($daypass[$k]) . "'";
             }
         }
-        $sql = "INSERT INTO `key` (" . implode(', ', $cols) . ") ";
+        $sql = "INSERT INTO `daypass` (" . implode(', ', $cols) . ") ";
         $sql .= " VALUES (" . implode(', ', $values) . ")";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
         $kid = mysql_insert_id();
-        message_register('Key added');
+        message_register('Day Pass added');
     }
-    return crm_get_one('key', array('kid'=>$kid));
+    return crm_get_one('daypass', array('kid'=>$kid));
 }
 
 /**
- * Delete a key.
- * @param $key The key data structure to delete, must have a 'kid' element.
+ * Delete a day pass.
+ * @param $daypass The day pass data structure to delete, must have a 'kid' element.
  */
-function key_delete ($key) {
-    $esc_kid = mysql_real_escape_string($key['kid']);
-    $sql = "DELETE FROM `key` WHERE `kid`='$esc_kid'";
+function daypass_delete ($daypass) {
+    $esc_kid = mysql_real_escape_string($daypass['kid']);
+    $sql = "DELETE FROM `daypass` WHERE `kid`='$esc_kid'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Key deleted.');
+        message_register('Day Pass deleted.');
     }
 }
 
 // Table data structures ///////////////////////////////////////////////////////
 
 /**
- * Return a table structure for a table of key assignments.
+ * Return a table structure for a table of day pass assignments.
  *
- * @param $opts The options to pass to key_data().
+ * @param $opts The options to pass to daypass_data().
  * @return The table structure.
 */
-function key_table ($opts) {
+function daypass_table ($opts) {
     // Determine settings
     $export = false;
     foreach ($opts as $option => $value) {
@@ -304,8 +304,8 @@ function key_table ($opts) {
                 break;
         }
     }
-    // Get key data
-    $data = crm_get_data('key', $opts);
+    // Get day pass data
+    $data = crm_get_data('daypass', $opts);
     if (count($data) < 1) {
         return array();
     }
@@ -324,37 +324,37 @@ function key_table ($opts) {
         "columns" => array()
     );
     // Add columns
-    if (user_access('key_view') || $opts['cid'] == user_id()) {
+    if (user_access('daypass_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Serial', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Start', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'End', 'class'=>'', 'id'=>'');
     }
     // Add ops column
-    if (!$export && (user_access('key_edit') || user_access('key_delete'))) {
+    if (!$export && (user_access('daypass_edit') || user_access('daypass_delete'))) {
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
     // Add rows
-    foreach ($data as $key) {
-        // Add key data
+    foreach ($data as $daypass) {
+        // Add day pass data
         $row = array();
-        if (user_access('key_view') || $opts['cid'] == user_id()) {
+        if (user_access('daypass_view') || $opts['cid'] == user_id()) {
             // Add cells
-            $row[] = theme('contact_name', $cid_to_contact[$key['cid']], true);
-            $row[] = $key['serial'];
-            $row[] = $key['start'];
-            $row[] = $key['end'];
+            $row[] = theme('contact_name', $cid_to_contact[$daypass['cid']], true);
+            $row[] = $daypass['serial'];
+            $row[] = $daypass['start'];
+            $row[] = $daypass['end'];
         }
-        if (!$export && (user_access('key_edit') || user_access('key_delete'))) {
+        if (!$export && (user_access('daypass_edit') || user_access('daypass_delete'))) {
             // Construct ops array
             $ops = array();
             // Add edit op
-            if (user_access('key_edit')) {
-                $ops[] = '<a href=' . crm_url('key&kid=' . $key['kid'] . '#tab-edit') . '>edit</a> ';
+            if (user_access('daypass_edit')) {
+                $ops[] = '<a href=' . crm_url('daypass&kid=' . $daypass['kid'] . '#tab-edit') . '>edit</a> ';
             }
             // Add delete op
-            if (user_access('key_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=key&id=' . $key['kid']) . '>delete</a>';
+            if (user_access('daypass_delete')) {
+                $ops[] = '<a href=' . crm_url('delete&type=daypass&id=' . $daypass['kid']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -367,15 +367,15 @@ function key_table ($opts) {
 // Forms ///////////////////////////////////////////////////////////////////////
 
 /**
- * Return the form structure for the add key assignment form.
+ * Return the form structure for the add day pass assignment form.
  *
- * @param The cid of the contact to add a key assignment for.
+ * @param The cid of the contact to add a day pass assignment for.
  * @return The form structure.
 */
-function key_add_form ($cid) {
+function daypass_add_form ($cid) {
     
-    // Ensure user is allowed to edit keys
-    if (!user_access('key_edit')) {
+    // Ensure user is allowed to edit day passes
+    if (!user_access('daypass_edit')) {
         return NULL;
     }
     
@@ -383,14 +383,14 @@ function key_add_form ($cid) {
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_add',
+        'command' => 'daypass_add',
         'hidden' => array(
             'cid' => $cid
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Add Key Assignment',
+                'label' => 'Add Day Pass Assignment',
                 'fields' => array(
                     array(
                         'type' => 'text',
@@ -423,44 +423,44 @@ function key_add_form ($cid) {
 }
 
 /**
- * Return the form structure for an edit key assignment form.
+ * Return the form structure for an edit day passes form.
  *
- * @param $kid The kid of the key assignment to edit.
+ * @param $kid The kid of the day pass to edit.
  * @return The form structure.
 */
-function key_edit_form ($kid) {
-    // Ensure user is allowed to edit key
-    if (!user_access('key_edit')) {
+function daypass_edit_form ($kid) {
+    // Ensure user is allowed to edit daypass
+    if (!user_access('daypass_edit')) {
         return NULL;
     }
-    // Get key data
-    $data = crm_get_data('key', array('kid'=>$kid));
-    $key = $data[0];
-    if (empty($key) || count($key) < 1) {
+    // Get day pass data
+    $data = crm_get_data('daypass', array('kid'=>$kid));
+    $daypass = $data[0];
+    if (empty($daypass) || count($daypass) < 1) {
         return array();
     }
     // Get corresponding contact data
-    $contact = crm_get_one('contact', array('cid'=>$key['cid']));
+    $contact = crm_get_one('contact', array('cid'=>$daypass['cid']));
     // Construct member name
     $name = theme('contact_name', $contact, true);
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_update',
+        'command' => 'daypass_update',
         'hidden' => array(
             'kid' => $kid
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Edit Key Info',
+                'label' => 'Edit Day Pass Info',
                 'fields' => array(
                     array(
                         'type' => 'text',
                         'label' => 'Serial',
                         'name' => 'serial',
-                        'value' => $key['serial']
+                        'value' => $daypass['serial']
                     ),
                     array(
                         'type' => 'readonly',
@@ -472,14 +472,14 @@ function key_edit_form ($kid) {
                         'class' => 'date',
                         'label' => 'Start',
                         'name' => 'start',
-                        'value' => $key['start']
+                        'value' => $daypass['start']
                     ),
                     array(
                         'type' => 'text',
                         'class' => 'date',
                         'label' => 'End',
                         'name' => 'end',
-                        'value' => $key['end']
+                        'value' => $daypass['end']
                     ),
                     array(
                         'type' => 'submit',
@@ -494,41 +494,41 @@ function key_edit_form ($kid) {
 }
 
 /**
- * Return the delete key assigment form structure.
+ * Return the delete day pass form structure.
  *
- * @param $kid The kid of the key assignment to delete.
+ * @param $kid The kid of the day pass to delete.
  * @return The form structure.
 */
-function key_delete_form ($kid) {
+function daypass_delete_form ($kid) {
     
-    // Ensure user is allowed to delete keys
-    if (!user_access('key_delete')) {
+    // Ensure user is allowed to delete day passes
+    if (!user_access('daypass_delete')) {
         return NULL;
     }
     
-    // Get key data
-    $data = crm_get_data('key', array('kid'=>$kid));
-    $key = $data[0];
+    // Get day pass data
+    $data = crm_get_data('daypass', array('kid'=>$kid));
+    $daypass = $data[0];
     
-    // Construct key name
-    $key_name = "key:$key[kid] serial:$key[serial] $key[start] -- $key[end]";
+    // Construct day pass name
+    $daypass_name = "Day Pass:$daypass[kid] serial:$daypass[serial] $daypass[start] -- $daypass[end]";
     
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'key_delete',
+        'command' => 'daypass_delete',
         'hidden' => array(
-            'kid' => $key['kid']
+            'kid' => $daypass['kid']
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Delete Key',
+                'label' => 'Delete Day Pass',
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the key assignment "' . $key_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the daypass assignment "' . $daypass_name . '"? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -550,58 +550,58 @@ function key_delete_form ($kid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function key_command ($command, &$url, &$params) {
+function daypass_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'keys';
+            $params['tab'] = 'daypasses';
             break;
     }
 }
 
 /**
- * Handle key add request.
+ * Handle day pass add request.
  *
  * @return The url to display on completion.
  */
-function command_key_add() {
+function command_daypass_add() {
     // Verify permissions
-    if (!user_access('key_edit')) {
-        error_register('Permission denied: key_edit');
-        return crm_url('key&kid=' . $_POST['kid']);
+    if (!user_access('daypass_edit')) {
+        error_register('Permission denied: daypass_edit');
+        return crm_url('daypass&kid=' . $_POST['kid']);
     }
-    key_save($_POST);
-    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=keys');
+    daypass_save($_POST);
+    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=daypasses');
 }
 
 /**
- * Handle key update request.
+ * Handle day pass update request.
  *
  * @return The url to display on completion.
  */
-function command_key_update() {
+function command_daypass_update() {
     // Verify permissions
-    if (!user_access('key_edit')) {
-        error_register('Permission denied: key_edit');
-        return crm_url('key&kid=' . $_POST['kid']);
+    if (!user_access('daypass_edit')) {
+        error_register('Permission denied: daypass_edit');
+        return crm_url('daypass&kid=' . $_POST['kid']);
     }
-    // Save key
-    key_save($_POST);
-    return crm_url('key&kid=' . $_POST['kid'] . '&tab=edit');
+    // Save day pass
+    daypass_save($_POST);
+    return crm_url('daypass&kid=' . $_POST['kid'] . '&tab=edit');
 }
 
 /**
- * Handle key delete request.
+ * Handle day pass delete request.
  *
  * @return The url to display on completion.
  */
-function command_key_delete() {
+function command_daypass_delete() {
     global $esc_post;
     // Verify permissions
-    if (!user_access('key_delete')) {
-        error_register('Permission denied: key_delete');
-        return crm_url('key&kid=' . $esc_post['kid']);
+    if (!user_access('daypass_delete')) {
+        error_register('Permission denied: daypass_delete');
+        return crm_url('daypass&kid=' . $esc_post['kid']);
     }
-    key_delete($_POST);
+    daypass_delete($_POST);
     return crm_url('members');
 }
 
@@ -610,10 +610,10 @@ function command_key_delete() {
 /**
  * @return An array of pages provided by this module.
  */
-function key_page_list () {
+function daypass_page_list () {
     $pages = array();
-    if (user_access('key_view')) {
-        $pages[] = 'keys';
+    if (user_access('daypass_view')) {
+        $pages[] = 'daypasses';
     }
     return $pages;
 }
@@ -625,7 +625,7 @@ function key_page_list () {
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
 */
-function key_page (&$page_data, $page_name, $options) {
+function daypass_page (&$page_data, $page_name, $options) {
     
     switch ($page_name) {
         
@@ -637,37 +637,37 @@ function key_page (&$page_data, $page_name, $options) {
                 return;
             }
             
-            // Add keys tab
-            if (user_access('key_view') || user_access('key_edit') || user_access('key_delete') || $cid == user_id()) {
-                $keys = theme('table', 'key', array('cid' => $cid));
-                $keys .= theme('key_add_form', $cid);
-                page_add_content_bottom($page_data, $keys, 'Keys');
+            // Add day passes tab
+            if (user_access('daypass_view') || user_access('daypass_edit') || user_access('daypass_delete') || $cid == user_id()) {
+                $daypasses = theme('table', 'daypass', array('cid' => $cid));
+                $daypasses .= theme('daypass_add_form', $cid);
+                page_add_content_bottom($page_data, $daypasses, 'Day Passes');
             }
             
             break;
         
-        case 'keys':
-            page_set_title($page_data, 'Keys');
-            if (user_access('key_view')) {
-                $keys = theme('table', 'key', array('join'=>array('contact', 'member'), 'show_export'=>true));
-                page_add_content_top($page_data, $keys, 'View');
+        case 'daypasses':
+            page_set_title($page_data, 'Day Passes');
+            if (user_access('daypass_view')) {
+                $daypasses = theme('table', 'daypass', array('join'=>array('contact', 'member'), 'show_export'=>true));
+                page_add_content_top($page_data, $daypasses, 'View');
             }
             break;
         
-        case 'key':
+        case 'daypass':
             
-            // Capture key id
+            // Capture day pass id
             $kid = $options['kid'];
             if (empty($kid)) {
                 return;
             }
             
             // Set page title
-            page_set_title($page_data, key_description($kid));
+            page_set_title($page_data, daypass_description($kid));
             
             // Add edit tab
-            if (user_access('key_view') || user_access('key_edit') || user_access('key_delete')) {
-                page_add_content_top($page_data, theme('key_edit_form', $kid), 'Edit');
+            if (user_access('daypass_view') || user_access('daypass_edit') || user_access('daypass_delete')) {
+                page_add_content_top($page_data, theme('daypass_edit_form', $kid), 'Edit');
             }
             
             break;
@@ -677,23 +677,23 @@ function key_page (&$page_data, $page_name, $options) {
 // Themeing ////////////////////////////////////////////////////////////////////
 
 /**
- * Return the themed html for an add key assignment form.
+ * Return the themed html for an add day pass form.
  *
- * @param $cid The id of the contact to add a key assignment for.
+ * @param $cid The id of the contact to add a day pass assignment for.
  * @return The themed html string.
  */
-function theme_key_add_form ($cid) {
-    return theme('form', crm_get_form('key_add', $cid));
+function theme_daypass_add_form ($cid) {
+    return theme('form', crm_get_form('daypass_add', $cid));
 }
 
 /**
- * Return themed html for an edit key assignment form.
+ * Return themed html for an edit day pass form.
  *
- * @param $kid The kid of the key assignment to edit.
+ * @param $kid The kid of the day pass to edit.
  * @return The themed html string.
  */
-function theme_key_edit_form ($kid) {
-    return theme('form', crm_get_form('key_edit', $kid));
+function theme_daypass_edit_form ($kid) {
+    return theme('form', crm_get_form('daypass_edit', $kid));
 }
 
 ?>
