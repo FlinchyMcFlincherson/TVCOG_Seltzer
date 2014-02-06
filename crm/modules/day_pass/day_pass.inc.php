@@ -26,18 +26,18 @@
  * @return This module's revision number.  Each new release should increment
  * this number.
  */
-function daypass_revision () {
+function day_pass_revision () {
     return 1;
 }
 
 /**
  * @return An array of the permissions provided by this module.
  */
-function daypass_permissions () {
+function day_pass_permissions () {
     return array(
-        'daypass_view'
-        , 'daypass_edit'
-        , 'daypass_delete'
+        'day_pass_view'
+        , 'day_pass_edit'
+        , 'day_pass_delete'
     );
 }
 
@@ -46,15 +46,15 @@ function daypass_permissions () {
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
  */
-function daypass_install($old_revision = 0) {
+function day_pass_install($old_revision = 0) {
     if ($old_revision < 1) {
         $sql = '
-            CREATE TABLE IF NOT EXISTS `daypass` (
+            CREATE TABLE IF NOT EXISTS `day_pass` (
               `dpid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
+              `guid` varchar(255) NOT NULL,
               `purchased` date DEFAULT NULL,
               `used` date DEFAULT NULL,
-              `guid` varchar(255) NOT NULL,
               PRIMARY KEY (`dpid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
@@ -62,7 +62,7 @@ function daypass_install($old_revision = 0) {
         if (!$res) die(mysql_error());
     }
     // Permissions moved to DB, set defaults on install/upgrade
-    if ($old_revision < 2) {
+/*    if ($old_revision < 2) {
         // Set default permissions
         $roles = array(
             '1' => 'authenticated'
@@ -75,8 +75,8 @@ function daypass_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('daypass_view', 'daypass_edit', 'daypass_delete')
-            , 'webAdmin' => array('daypass_view', 'daypass_edit', 'daypass_delete')
+            'director' => array('day_pass_view', 'day_pass_edit', 'day_pass_delete')
+            , 'webAdmin' => array('day_pass_view', 'day_pass_edit', 'day_pass_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -89,7 +89,7 @@ function daypass_install($old_revision = 0) {
                 }
             }
         }
-    }
+    }*/
 }
 
 // Utility functions ///////////////////////////////////////////////////////////
@@ -100,18 +100,18 @@ function daypass_install($old_revision = 0) {
  * @param $dpid The dpid of the day pass to describe.
  * @return The description string.
  */
-function daypass_description ($dpid) {
+function day_pass_description ($dpid) {
     
     // Get day pass data
-    $data = crm_get_data('daypass', array('dpid' => $dpid));
+    $data = crm_get_data('day_pass', array('dpid' => $dpid));
     if (empty($data)) {
         return '';
     }
-    $daypass = $data[0];
+    $day_pass = $data[0];
     
     // Construct description
     $description = 'Day Pass ';
-    $description .= $daypass['guid'];
+    $description .= $day_pass['guid'];
     
     return $description;
 }
@@ -123,21 +123,21 @@ function daypass_description ($dpid) {
  *
  * @param $opts An associative array of options, possible keys are:
  *   'dpid' If specified, returns a single memeber with the matching day pass id;
- *   'cid' If specified, returns all daypasses assigned to the contact with specified id;
+ *   'cid' If specified, returns all day_passes assigned to the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the daypass table.
+ *   'join' A list of tables to join to the day_pass table.
  * @return An array with each element representing a single day pass.
 */ 
-function daypass_data ($opts = array()) {
+function day_pass_data ($opts = array()) {
     // Query database
     $sql = "
         SELECT
         `dpid`
         , `cid`
+        , `guid`
         , `purchased`
         , `used`
-        , `guid`
-        FROM `daypass`
+        FROM `day_pass`
         WHERE 1";
     if (!empty($opts['dpid'])) {
         $esc_dpid = mysql_real_escape_string($opts['dpid']);
@@ -174,15 +174,15 @@ function daypass_data ($opts = array()) {
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
-    $daypasses = array();
+    $day_passes = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
         // Contents of row are dpid, cid, purchased, used, guid
-        $daypasses[] = $row;
+        $day_passes[] = $row;
         $row = mysql_fetch_assoc($res);
     }
     // Return data
-    return $daypasses;
+    return $day_passes;
 }
 
 /**
@@ -192,7 +192,7 @@ function daypass_data ($opts = array()) {
  * @param $opts An associative array of options.
  * @return An array of modified structures.
  */
-function daypass_data_alter ($type, $data = array(), $opts = array()) {
+function day_pass_data_alter ($type, $data = array(), $opts = array()) {
     switch ($type) {
         case 'contact':
             // Get cids of all contacts passed into $data
@@ -201,20 +201,20 @@ function daypass_data_alter ($type, $data = array(), $opts = array()) {
                 $cids[] = $contact['cid'];
             }
             // Add the cids to the options
-            $daypass_opts = $opts;
-            $daypass_opts['cid'] = $cids;
+            $day_pass_opts = $opts;
+            $day_pass_opts['cid'] = $cids;
             // Get an array of day pass structures for each cid
-            $daypass_data = crm_get_data('daypass', $daypass_opts);
+            $day_pass_data = crm_get_data('day_pass', $day_pass_opts);
             // Create a map from cid to an array of day pass structures
-            $cid_to_daypasses = array();
-            foreach ($daypass_data as $daypass) {
-                $cid_to_daypasses[$daypass['cid']][] = $daypass;
+            $cid_to_day_passes = array();
+            foreach ($day_pass_data as $day_pass) {
+                $cid_to_day_passes[$day_pass['cid']][] = $day_pass;
             }
             // Add day pass structures to the contact structures
             foreach ($data as $i => $contact) {
-                if (array_key_exists($contact['cid'], $cid_to_daypasses)) {
-                    $daypasses = $cid_to_daypasses[$contact['cid']];
-                    $data[$i]['daypasses'] = $daypasses;
+                if (array_key_exists($contact['cid'], $cid_to_day_passes)) {
+                    $day_passes = $cid_to_day_passes[$contact['cid']];
+                    $data[$i]['day_passes'] = $day_passes;
                 }
             }
             break;
@@ -223,62 +223,62 @@ function daypass_data_alter ($type, $data = array(), $opts = array()) {
 }
 
 /**
- * Save a day pass structure.  If $daypass has a 'dpid' element, an existing day pass will
+ * Save a day pass structure.  If $day_pass has a 'dpid' element, an existing day pass will
  * be updated, otherwise a new day pass will be created.
  * @param $dpid The day pass structure
  * @return The day pass structure with as it now exists in the database.
  */
-function daypass_save ($daypass) {
+function day_pass_save ($day_pass) {
     // Escape values
     $fields = array('dpid', 'cid', 'guid', 'purchased', 'used');
-    if (isset($daypass['dpid'])) {
-        // Update existing daypass
-        $dpid = $daypass['dpid'];
+    if (isset($day_pass['dpid'])) {
+        // Update existing day_pass
+        $dpid = $day_pass['dpid'];
         $esc_dpid = mysql_real_escape_string($dpid);
         $clauses = array();
-        foreach ($fields as $k) {
-            if ($k == 'used' && empty($daypass[$k])) {
+        foreach ($fields as $dp) {
+            if ($dp == 'used' && empty($day_pass[$dp])) {
                 continue;
             }
-            if (isset($daypass[$k]) && $k != 'dpid') {
-                $clauses[] = "`$k`='" . mysql_real_escape_string($daypass[$k]) . "' ";
+            if (isset($day_pass[$dp]) && $dp != 'dpid') {
+                $clauses[] = "`$dp`='" . mysql_real_escape_string($day_pass[$dp]) . "' ";
             }
         }
-        $sql = "UPDATE `daypass` SET " . implode(', ', $clauses) . " ";
+        $sql = "UPDATE `day_pass` SET " . implode(', ', $clauses) . " ";
         $sql .= "WHERE `dpid`='$esc_dpid'";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
         message_register('Day Pass updated');
     } else {
-        // Insert new daypass
+        // Insert new day_pass
         $cols = array();
         $values = array();
-        foreach ($fields as $k) {
-            if (isset($daypass[$k])) {
-                if ($k == 'used' && empty($daypass[$k])) {
+        foreach ($fields as $dp) {
+            if (isset($day_pass[$dp])) {
+                if ($dp == 'used' && empty($day_pass[$dp])) {
                     continue;
                 }
-                $cols[] = "`$k`";
-                $values[] = "'" . mysql_real_escape_string($daypass[$k]) . "'";
+                $cols[] = "`$dp`";
+                $values[] = "'" . mysql_real_escape_string($day_pass[$dp]) . "'";
             }
         }
-        $sql = "INSERT INTO `daypass` (" . implode(', ', $cols) . ") ";
+        $sql = "INSERT INTO `day_pass` (" . implode(', ', $cols) . ") ";
         $sql .= " VALUES (" . implode(', ', $values) . ")";
         $res = mysql_query($sql);
         if (!$res) die(mysql_error());
         $dpid = mysql_insert_id();
         message_register('Day Pass added');
     }
-    return crm_get_one('daypass', array('dpid'=>$dpid));
+    return crm_get_one('day_pass', array('dpid'=>$dpid));
 }
 
 /**
  * Delete a day pass.
- * @param $daypass The day pass data structure to delete, must have a 'dpid' element.
+ * @param $day_pass The day pass data structure to delete, must have a 'dpid' element.
  */
-function daypass_delete ($daypass) {
-    $esc_dpid = mysql_real_escape_string($daypass['dpid']);
-    $sql = "DELETE FROM `daypass` WHERE `dpid`='$esc_dpid'";
+function day_pass_delete ($day_pass) {
+    $esc_dpid = mysql_real_escape_string($day_pass['dpid']);
+    $sql = "DELETE FROM `day_pass` WHERE `dpid`='$esc_dpid'";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     if (mysql_affected_rows() > 0) {
@@ -291,10 +291,10 @@ function daypass_delete ($daypass) {
 /**
  * Return a table structure for a table of day pass assignments.
  *
- * @param $opts The options to pass to daypass_data().
+ * @param $opts The options to pass to day_pass_data().
  * @return The table structure.
 */
-function daypass_table ($opts) {
+function day_pass_table ($opts) {
     // Determine settings
     $export = false;
     foreach ($opts as $option => $value) {
@@ -305,7 +305,7 @@ function daypass_table ($opts) {
         }
     }
     // Get day pass data
-    $data = crm_get_data('daypass', $opts);
+    $data = crm_get_data('day_pass', $opts);
     if (count($data) < 1) {
         return array();
     }
@@ -324,37 +324,37 @@ function daypass_table ($opts) {
         "columns" => array()
     );
     // Add columns
-    if (user_access('daypass_view') || $opts['cid'] == user_id()) {
+    if (user_access('day_pass_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'GUID', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Purchased', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Used', 'class'=>'', 'id'=>'');
     }
     // Add ops column
-    if (!$export && (user_access('daypass_edit') || user_access('daypass_delete'))) {
+    if (!$export && (user_access('day_pass_edit') || user_access('day_pass_delete'))) {
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
     // Add rows
-    foreach ($data as $daypass) {
+    foreach ($data as $day_pass) {
         // Add day pass data
         $row = array();
-        if (user_access('daypass_view') || $opts['cid'] == user_id()) {
+        if (user_access('day_pass_view') || $opts['cid'] == user_id()) {
             // Add cells
-            $row[] = theme('contact_name', $cid_to_contact[$daypass['cid']], true);
-            $row[] = $daypass['guid'];
-            $row[] = $daypass['purchased'];
-            $row[] = $daypass['used'];
+            $row[] = theme('contact_name', $cid_to_contact[$day_pass['cid']], true);
+            $row[] = $day_pass['guid'];
+            $row[] = $day_pass['purchased'];
+            $row[] = $day_pass['used'];
         }
-        if (!$export && (user_access('daypass_edit') || user_access('daypass_delete'))) {
+        if (!$export && (user_access('day_pass_edit') || user_access('day_pass_delete'))) {
             // Construct ops array
             $ops = array();
             // Add edit op
-            if (user_access('daypass_edit')) {
-                $ops[] = '<a href=' . crm_url('daypass&dpid=' . $daypass['dpid'] . '#tab-edit') . '>edit</a> ';
+            if (user_access('day_pass_edit')) {
+                $ops[] = '<a href=' . crm_url('day_pass&dpid=' . $day_pass['dpid'] . '#tab-edit') . '>edit</a> ';
             }
             // Add delete op
-            if (user_access('daypass_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=daypass&id=' . $daypass['dpid']) . '>delete</a>';
+            if (user_access('day_pass_delete')) {
+                $ops[] = '<a href=' . crm_url('delete&type=day_pass&id=' . $day_pass['dpid']) . '>delete</a>';
             }
             // Add ops row
             $row[] = join(' ', $ops);
@@ -372,18 +372,20 @@ function daypass_table ($opts) {
  * @param The cid of the contact to add a day pass assignment for.
  * @return The form structure.
 */
-function daypass_add_form ($cid) {
+function day_pass_add_form ($cid) {
     
     // Ensure user is allowed to edit day passes
-    if (!user_access('daypass_edit')) {
+    if (!user_access('day_pass_edit')) {
         return NULL;
     }
     
+    $guid = com_create_guid();
+
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'daypass_add',
+        'command' => 'day_pass_add',
         'hidden' => array(
             'cid' => $cid
         ),
@@ -393,9 +395,10 @@ function daypass_add_form ($cid) {
                 'label' => 'Add Day Pass Assignment',
                 'fields' => array(
                     array(
-                        'type' => 'text',
+                        'type' => 'readonly',
                         'label' => 'GUID',
-                        'name' => 'guid'
+                        'name' => 'guid',
+                        'value' => $guid,
                     ),
                     array(
                         'type' => 'text',
@@ -428,26 +431,26 @@ function daypass_add_form ($cid) {
  * @param $dpid The dpid of the day pass to edit.
  * @return The form structure.
 */
-function daypass_edit_form ($dpid) {
-    // Ensure user is allowed to edit daypass
-    if (!user_access('daypass_edit')) {
+function day_pass_edit_form ($dpid) {
+    // Ensure user is allowed to edit day_pass
+    if (!user_access('day_pass_edit')) {
         return NULL;
     }
     // Get day pass data
-    $data = crm_get_data('daypass', array('dpid'=>$dpid));
-    $daypass = $data[0];
-    if (empty($daypass) || count($daypass) < 1) {
+    $data = crm_get_data('day_pass', array('dpid'=>$dpid));
+    $day_pass = $data[0];
+    if (empty($day_pass) || count($day_pass) < 1) {
         return array();
     }
     // Get corresponding contact data
-    $contact = crm_get_one('contact', array('cid'=>$daypass['cid']));
+    $contact = crm_get_one('contact', array('cid'=>$day_pass['cid']));
     // Construct member name
     $name = theme('contact_name', $contact, true);
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'daypass_update',
+        'command' => 'day_pass_update',
         'hidden' => array(
             'dpid' => $dpid
         ),
@@ -457,29 +460,29 @@ function daypass_edit_form ($dpid) {
                 'label' => 'Edit Day Pass Info',
                 'fields' => array(
                     array(
-                        'type' => 'text',
-                        'label' => 'GUID',
-                        'name' => 'guid',
-                        'value' => $daypass['guid']
-                    ),
-                    array(
                         'type' => 'readonly',
                         'label' => 'Name',
                         'value' => $name
+                    ),
+                    array(
+                        'type' => 'readonly',
+                        'label' => 'GUID',
+                        'name' => 'guid',
+                        'value' => $day_pass['guid']
                     ),
                     array(
                         'type' => 'text',
                         'class' => 'date',
                         'label' => 'Purchased',
                         'name' => 'purchased',
-                        'value' => $daypass['purchased']
+                        'value' => $day_pass['purchased']
                     ),
                     array(
                         'type' => 'text',
                         'class' => 'date',
                         'label' => 'Used',
                         'name' => 'used',
-                        'value' => $daypass['used']
+                        'value' => $day_pass['used']
                     ),
                     array(
                         'type' => 'submit',
@@ -499,27 +502,27 @@ function daypass_edit_form ($dpid) {
  * @param $dpid The dpid of the day pass to delete.
  * @return The form structure.
 */
-function daypass_delete_form ($dpid) {
+function day_pass_delete_form ($dpid) {
     
     // Ensure user is allowed to delete day passes
-    if (!user_access('daypass_delete')) {
+    if (!user_access('day_pass_delete')) {
         return NULL;
     }
     
     // Get day pass data
-    $data = crm_get_data('daypass', array('dpid'=>$dpid));
-    $daypass = $data[0];
+    $data = crm_get_data('day_pass', array('dpid'=>$dpid));
+    $day_pass = $data[0];
     
     // Construct day pass name
-    $daypass_name = "Day Pass:$daypass[dpid] guid:$daypass[guid] $daypass[purchased] -- $daypass[used]";
+    $day_pass_name = "Day Pass:$day_pass[dpid] guid:$day_pass[guid] purchased:$day_pass[purchased] -- used:$day_pass[used]";
     
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'daypass_delete',
+        'command' => 'day_pass_delete',
         'hidden' => array(
-            'dpid' => $daypass['dpid']
+            'dpid' => $day_pass['dpid']
         ),
         'fields' => array(
             array(
@@ -528,7 +531,7 @@ function daypass_delete_form ($dpid) {
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the daypass assignment "' . $daypass_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the day_pass "' . $day_pass_name . '"? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -550,10 +553,10 @@ function daypass_delete_form ($dpid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function daypass_command ($command, &$url, &$params) {
+function day_pass_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
-            $params['tab'] = 'daypasses';
+            $params['tab'] = 'day_passes';
             break;
     }
 }
@@ -563,14 +566,14 @@ function daypass_command ($command, &$url, &$params) {
  *
  * @return The url to display on completion.
  */
-function command_daypass_add() {
+function command_day_pass_add() {
     // Verify permissions
-    if (!user_access('daypass_edit')) {
-        error_register('Permission denied: daypass_edit');
-        return crm_url('daypass&dpid=' . $_POST['dpid']);
+    if (!user_access('day_pass_edit')) {
+        error_register('Permission denied: day_pass_edit');
+        return crm_url('day_pass&dpid=' . $_POST['dpid']);
     }
-    daypass_save($_POST);
-    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=daypasses');
+    day_pass_save($_POST);
+    return crm_url('contact&cid=' . $_POST['cid'] . '&tab=day_passes');
 }
 
 /**
@@ -578,15 +581,15 @@ function command_daypass_add() {
  *
  * @return The url to display on completion.
  */
-function command_daypass_update() {
+function command_day_pass_update() {
     // Verify permissions
-    if (!user_access('daypass_edit')) {
-        error_register('Permission denied: daypass_edit');
-        return crm_url('daypass&dpid=' . $_POST['dpid']);
+    if (!user_access('day_pass_edit')) {
+        error_register('Permission denied: day_pass_edit');
+        return crm_url('day_pass&dpid=' . $_POST['dpid']);
     }
     // Save day pass
-    daypass_save($_POST);
-    return crm_url('daypass&dpid=' . $_POST['dpid'] . '&tab=edit');
+    day_pass_save($_POST);
+    return crm_url('day_pass&dpid=' . $_POST['dpid'] . '&tab=edit');
 }
 
 /**
@@ -594,14 +597,14 @@ function command_daypass_update() {
  *
  * @return The url to display on completion.
  */
-function command_daypass_delete() {
+function command_day_pass_delete() {
     global $esc_post;
     // Verify permissions
-    if (!user_access('daypass_delete')) {
-        error_register('Permission denied: daypass_delete');
-        return crm_url('daypass&dpid=' . $esc_post['dpid']);
+    if (!user_access('day_pass_delete')) {
+        error_register('Permission denied: day_pass_delete');
+        return crm_url('day_pass&dpid=' . $esc_post['dpid']);
     }
-    daypass_delete($_POST);
+    day_pass_delete($_POST);
     return crm_url('members');
 }
 
@@ -610,10 +613,10 @@ function command_daypass_delete() {
 /**
  * @return An array of pages provided by this module.
  */
-function daypass_page_list () {
+function day_pass_page_list () {
     $pages = array();
-    if (user_access('daypass_view')) {
-        $pages[] = 'daypasses';
+    if (user_access('day_pass_view')) {
+        $pages[] = 'day_passes';
     }
     return $pages;
 }
@@ -625,7 +628,7 @@ function daypass_page_list () {
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
 */
-function daypass_page (&$page_data, $page_name, $options) {
+function day_pass_page (&$page_data, $page_name, $options) {
     
     switch ($page_name) {
         
@@ -638,23 +641,23 @@ function daypass_page (&$page_data, $page_name, $options) {
             }
             
             // Add day passes tab
-            if (user_access('daypass_view') || user_access('daypass_edit') || user_access('daypass_delete') || $cid == user_id()) {
-                $daypasses = theme('table', 'daypass', array('cid' => $cid));
-                $daypasses .= theme('daypass_add_form', $cid);
-                page_add_content_bottom($page_data, $daypasses, 'Day Passes');
+            if (user_access('day_pass_view') || user_access('day_pass_edit') || user_access('day_pass_delete') || $cid == user_id()) {
+                $day_passes = theme('table', 'day_pass', array('cid' => $cid));
+                $day_passes .= theme('day_pass_add_form', $cid);
+                page_add_content_bottom($page_data, $day_passes, 'Day Passes');
             }
             
             break;
         
-        case 'daypasses':
+        case 'day_passes':
             page_set_title($page_data, 'Day Passes');
-            if (user_access('daypass_view')) {
-                $daypasses = theme('table', 'daypass', array('join'=>array('contact', 'member'), 'show_export'=>true));
-                page_add_content_top($page_data, $daypasses, 'View');
+            if (user_access('day_pass_view')) {
+                $day_passes = theme('table', 'day_pass', array('join'=>array('contact', 'member'), 'show_export'=>true));
+                page_add_content_top($page_data, $day_passes, 'View');
             }
             break;
         
-        case 'daypass':
+        case 'day_pass':
             
             // Capture day pass id
             $dpid = $options['dpid'];
@@ -663,11 +666,11 @@ function daypass_page (&$page_data, $page_name, $options) {
             }
             
             // Set page title
-            page_set_title($page_data, daypass_description($dpid));
+            page_set_title($page_data, day_pass_description($dpid));
             
             // Add edit tab
-            if (user_access('daypass_view') || user_access('daypass_edit') || user_access('daypass_delete')) {
-                page_add_content_top($page_data, theme('daypass_edit_form', $dpid), 'Edit');
+            if (user_access('day_pass_view') || user_access('day_pass_edit') || user_access('day_pass_delete')) {
+                page_add_content_top($page_data, theme('day_pass_edit_form', $dpid), 'Edit');
             }
             
             break;
@@ -682,8 +685,8 @@ function daypass_page (&$page_data, $page_name, $options) {
  * @param $cid The id of the contact to add a day pass assignment for.
  * @return The themed html string.
  */
-function theme_daypass_add_form ($cid) {
-    return theme('form', crm_get_form('daypass_add', $cid));
+function theme_day_pass_add_form ($cid) {
+    return theme('form', crm_get_form('day_pass_add', $cid));
 }
 
 /**
@@ -692,8 +695,8 @@ function theme_daypass_add_form ($cid) {
  * @param $dpid The dpid of the day pass to edit.
  * @return The themed html string.
  */
-function theme_daypass_edit_form ($dpid) {
-    return theme('form', crm_get_form('daypass_edit', $dpid));
+function theme_day_pass_edit_form ($dpid) {
+    return theme('form', crm_get_form('day_pass_edit', $dpid));
 }
 
 ?>
