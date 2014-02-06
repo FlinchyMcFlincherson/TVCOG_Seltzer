@@ -52,7 +52,7 @@ function daypass_install($old_revision = 0) {
             CREATE TABLE IF NOT EXISTS `daypass` (
               `dpid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `cid` mediumint(8) unsigned NOT NULL,
-              `start` date DEFAULT NULL,
+              `purchased` date DEFAULT NULL,
               `end` date DEFAULT NULL,
               `serial` varchar(255) NOT NULL,
               PRIMARY KEY (`dpid`)
@@ -134,7 +134,7 @@ function daypass_data ($opts = array()) {
         SELECT
         `dpid`
         , `cid`
-        , `start`
+        , `purchased`
         , `end`
         , `serial`
         FROM `daypass`
@@ -161,23 +161,23 @@ function daypass_data ($opts = array()) {
             switch ($name) {
                 case 'active':
                     if ($param) {
-                        $sql .= " AND (`start` IS NOT NULL AND `end` IS NULL)";
+                        $sql .= " AND (`purchased` IS NOT NULL AND `end` IS NULL)";
                     } else {
-                        $sql .= " AND (`start` IS NULL OR `end` IS NOT NULL)";
+                        $sql .= " AND (`purchased` IS NULL OR `end` IS NOT NULL)";
                     }
                     break;
             }
         }
     }
     $sql .= "
-        ORDER BY `start`, `dpid` ASC";
+        ORDER BY `purchased`, `dpid` ASC";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     // Store data
     $daypasses = array();
     $row = mysql_fetch_assoc($res);
     while (!empty($row)) {
-        // Contents of row are dpid, cid, start, end, serial
+        // Contents of row are dpid, cid, purchased, end, serial
         $daypasses[] = $row;
         $row = mysql_fetch_assoc($res);
     }
@@ -230,7 +230,7 @@ function daypass_data_alter ($type, $data = array(), $opts = array()) {
  */
 function daypass_save ($daypass) {
     // Escape values
-    $fields = array('dpid', 'cid', 'serial', 'start', 'end');
+    $fields = array('dpid', 'cid', 'serial', 'purchased', 'end');
     if (isset($daypass['dpid'])) {
         // Update existing daypass
         $dpid = $daypass['dpid'];
@@ -327,7 +327,7 @@ function daypass_table ($opts) {
     if (user_access('daypass_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Serial', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'Start', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Purchased', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'End', 'class'=>'', 'id'=>'');
     }
     // Add ops column
@@ -342,7 +342,7 @@ function daypass_table ($opts) {
             // Add cells
             $row[] = theme('contact_name', $cid_to_contact[$daypass['cid']], true);
             $row[] = $daypass['serial'];
-            $row[] = $daypass['start'];
+            $row[] = $daypass['purchased'];
             $row[] = $daypass['end'];
         }
         if (!$export && (user_access('daypass_edit') || user_access('daypass_delete'))) {
@@ -399,8 +399,8 @@ function daypass_add_form ($cid) {
                     ),
                     array(
                         'type' => 'text',
-                        'label' => 'Start',
-                        'name' => 'start',
+                        'label' => 'Purchased',
+                        'name' => 'purchased',
                         'value' => date("Y-m-d"),
                         'class' => 'date'
                     ),
@@ -470,9 +470,9 @@ function daypass_edit_form ($dpid) {
                     array(
                         'type' => 'text',
                         'class' => 'date',
-                        'label' => 'Start',
-                        'name' => 'start',
-                        'value' => $daypass['start']
+                        'label' => 'Purchased',
+                        'name' => 'purchased',
+                        'value' => $daypass['purchased']
                     ),
                     array(
                         'type' => 'text',
@@ -511,7 +511,7 @@ function daypass_delete_form ($dpid) {
     $daypass = $data[0];
     
     // Construct day pass name
-    $daypass_name = "Day Pass:$daypass[dpid] serial:$daypass[serial] $daypass[start] -- $daypass[end]";
+    $daypass_name = "Day Pass:$daypass[dpid] serial:$daypass[serial] $daypass[purchased] -- $daypass[end]";
     
     // Create form structure
     $form = array(
