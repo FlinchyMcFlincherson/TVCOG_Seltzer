@@ -86,7 +86,7 @@ $config_modules[] = "payment";
 //$config_modules[] = "paypal_payment";
 
 // Automated billing
-$config_modules[] = "billing";
+//$config_modules[] = "billing";
 
 // Assign a profile picture using gravatar 
 $config_modules[] = "profile_picture";
@@ -95,10 +95,13 @@ $config_modules[] = "profile_picture";
 //$config_modules[] = "mentor";
 
 // Track Member Training
-$config_module[] = "training";
+$config_modules[] = "training";
 
-// Track Member Training
-$config_module[] = "discounts";
+// Track Member Discounts
+$config_modules[] = "discount";
+
+// Track Day Passes
+$config_modules[] = "day_pass";
 
 // Developer tools
 //$config_modules[] = "devel";
@@ -109,8 +112,9 @@ $config_links = array(
     , 'members' => 'Members'
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
-    , 'training' => 'Training'
+    , 'trainings' => 'Trainings'
     , 'discounts' => 'Discounts'
+    //, 'day_passes' => 'Day Passes'
     , 'user_metas' => 'User Meta Data'
     , 'plan_metas' => 'Plan Meta Data'
     , 'payments' => 'Payments'
