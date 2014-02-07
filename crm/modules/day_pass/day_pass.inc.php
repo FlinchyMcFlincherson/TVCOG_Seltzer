@@ -110,7 +110,7 @@ function day_pass_description ($dpid) {
     $day_pass = $data[0];
     
     // Construct description
-    $description = 'Day Pass ';
+    $description = 'Day Pass ID: ';
     $description .= $day_pass['guid'];
     
     return $description;
@@ -123,14 +123,12 @@ function guid () {
         mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);// "-"
-        $uuid = chr(123)// "{"
-                .substr($charid, 0, 8).$hyphen
+        $guid = substr($charid, 0, 8).$hyphen
                 .substr($charid, 8, 4).$hyphen
                 .substr($charid,12, 4).$hyphen
                 .substr($charid,16, 4).$hyphen
-                .substr($charid,20,12)
-                .chr(125);// "}"
-        return $uuid;
+                .substr($charid,20,12);
+        return $guid;
     }
 }
 
@@ -344,7 +342,7 @@ function day_pass_table ($opts) {
     // Add columns
     if (user_access('day_pass_view') || $opts['cid'] == user_id()) {
         $table['columns'][] = array("title"=>'Name', 'class'=>'', 'id'=>'');
-        $table['columns'][] = array("title"=>'GUID', 'class'=>'', 'id'=>'');
+        $table['columns'][] = array("title"=>'Pass ID', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Purchased', 'class'=>'', 'id'=>'');
         $table['columns'][] = array("title"=>'Used', 'class'=>'', 'id'=>'');
     }
@@ -414,7 +412,7 @@ function day_pass_add_form ($cid) {
                 'fields' => array(
                     array(
                         'type' => 'readonly',
-                        'label' => 'GUID',
+                        'label' => 'Pass ID',
                         'name' => 'guid',
                         'value' => $guid,
                     ),
@@ -484,7 +482,7 @@ function day_pass_edit_form ($dpid) {
                     ),
                     array(
                         'type' => 'readonly',
-                        'label' => 'GUID',
+                        'label' => 'Pass ID',
                         'name' => 'guid',
                         'value' => $day_pass['guid']
                     ),
@@ -532,7 +530,7 @@ function day_pass_delete_form ($dpid) {
     $day_pass = $data[0];
     
     // Construct day pass name
-    $day_pass_name = "Day Pass:$day_pass[dpid] guid:$day_pass[guid] purchased:$day_pass[purchased] -- used:$day_pass[used]";
+    $day_pass_name = "Day Pass ID: $day_pass[guid] Purchased:$day_pass[purchased] Used:$day_pass[used]";
     
     // Create form structure
     $form = array(
@@ -662,7 +660,7 @@ function day_pass_page (&$page_data, $page_name, $options) {
             if (user_access('day_pass_view') || user_access('day_pass_edit') || user_access('day_pass_delete') || $cid == user_id()) {
                 $day_passes = theme('table', 'day_pass', array('cid' => $cid));
                 $day_passes .= theme('day_pass_add_form', $cid);
-                page_add_content_bottom($page_data, $day_passes, 'Day Passes');
+                page_add_content_bottom($page_data, $day_passes, 'Day_Passes');
             }
             
             break;
