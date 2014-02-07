@@ -24,18 +24,18 @@
  * @return This module's revision number.  Each new release should increment
  * this number.
  */
-function payment_revision () {
+function tool_revision () {
     return 1;
 }
 
 /**
  * @return An array of the permissions provided by this module.
  */
-function payment_permissions () {
+function tool_permissions () {
     return array(
-        'payment_view'
-        , 'payment_edit'
-        , 'payment_delete'
+        'tool_view'
+        , 'tool_edit'
+        , 'tool_delete'
     );
 }
 
@@ -44,11 +44,11 @@ function payment_permissions () {
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
  */
-function payment_install($old_revision = 0) {
+function tool_install($old_revision = 0) {
     // Create initial database table
     if ($old_revision < 1) {
         $sql = '
-            CREATE TABLE IF NOT EXISTS `payment` (
+            CREATE TABLE IF NOT EXISTS `tool` (
               `pmtid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
               `date` date DEFAULT NULL,
               `description` varchar(255) NOT NULL,
@@ -77,8 +77,8 @@ function payment_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('payment_view', 'payment_edit', 'payment_delete')
-            , 'webAdmin' => array('payment_view', 'payment_edit', 'payment_delete')
+            'director' => array('tool_view', 'tool_edit', 'tool_delete')
+            , 'webAdmin' => array('tool_view', 'tool_edit', 'tool_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -97,17 +97,17 @@ function payment_install($old_revision = 0) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
- * Return data for one or more payments.
+ * Return data for one or more tools.
  *
  * @param $opts An associative array of options, possible keys are:
- *   'pmtid' If specified, returns a single payment with the matching id;
- *   'cid' If specified, returns all payments assigned to the contact with specified id;
+ *   'pmtid' If specified, returns a single tool with the matching id;
+ *   'cid' If specified, returns all tools assigned to the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the payment table;
+ *   'join' A list of tables to join to the tool table;
  *   'order' An array of associative arrays of the form 'field'=>'order'.
- * @return An array with each element representing a single payment.
+ * @return An array with each element representing a single tool.
 */ 
-function payment_data ($opts = array()) {
+function tool_data ($opts = array()) {
     $sql = "
         SELECT
         `pmtid`
@@ -120,7 +120,7 @@ function payment_data ($opts = array()) {
         , `method`
         , `confirmation`
         , `notes`
-        FROM `payment`
+        FROM `tool`
     ";
     $sql .= "WHERE 1 ";
     if (array_key_exists('pmtid', $opts)) {
@@ -178,10 +178,10 @@ function payment_data ($opts = array()) {
     }
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
-    $payments = array();
+    $tools = array();
     $row = mysql_fetch_assoc($res);
     while ($row) {
-        $payment = array(
+        $tool = array(
             'pmtid' => $row['pmtid']
             , 'date' => $row['date']
             , 'description' => $row['description']
@@ -193,47 +193,47 @@ function payment_data ($opts = array()) {
             , 'confirmation' => $row['confirmation']
             , 'notes' => $row['notes']
         );
-        $payments[] = $payment;
+        $tools[] = $tool;
         $row = mysql_fetch_assoc($res);
     }
-    return $payments;
+    return $tools;
 }
 
 /**
- * Save a payment to the database.  If the payment has a key called "pmtid"
- * an existing payment will be updated in the database.  Otherwise a new payment
- * will be added to the database.  If a new payment is added to the database,
+ * Save a tool to the database.  If the tool has a key called "pmtid"
+ * an existing tool will be updated in the database.  Otherwise a new tool
+ * will be added to the database.  If a new tool is added to the database,
  * the returned array will have a "pmtid" field corresponding to the database id
- * of the new payment.
+ * of the new tool.
  * 
- * @param $payment An associative array representing a payment.
- * @return A new associative array representing the payment.
+ * @param $tool An associative array representing a tool.
+ * @return A new associative array representing the tool.
  */
-function payment_save ($payment) {
+function tool_save ($tool) {
     // Verify permissions and validate input
-    if (!user_access('payment_edit')) {
-        error_register('Permission denied: payment_edit');
+    if (!user_access('tool_edit')) {
+        error_register('Permission denied: tool_edit');
         return NULL;
     }
-    if (empty($payment)) {
+    if (empty($tool)) {
         return NULL;
     }
     // Sanitize input
-    $esc_pmtid = mysql_real_escape_string($payment['pmtid']);
-    $esc_date = mysql_real_escape_string($payment['date']);
-    $esc_description = mysql_real_escape_string($payment['description']);
-    $esc_code = mysql_real_escape_string($payment['code']);
-    $esc_value = mysql_real_escape_string($payment['value']);
-    $esc_credit = mysql_real_escape_string($payment['credit_cid']);
-    $esc_debit = mysql_real_escape_string($payment['debit_cid']);
-    $esc_method = mysql_real_escape_string($payment['method']);
-    $esc_confirmation = mysql_real_escape_string($payment['confirmation']);
-    $esc_notes = mysql_real_escape_string($payment['notes']);
+    $esc_pmtid = mysql_real_escape_string($tool['pmtid']);
+    $esc_date = mysql_real_escape_string($tool['date']);
+    $esc_description = mysql_real_escape_string($tool['description']);
+    $esc_code = mysql_real_escape_string($tool['code']);
+    $esc_value = mysql_real_escape_string($tool['value']);
+    $esc_credit = mysql_real_escape_string($tool['credit_cid']);
+    $esc_debit = mysql_real_escape_string($tool['debit_cid']);
+    $esc_method = mysql_real_escape_string($tool['method']);
+    $esc_confirmation = mysql_real_escape_string($tool['confirmation']);
+    $esc_notes = mysql_real_escape_string($tool['notes']);
     // Query database
-    if (array_key_exists('pmtid', $payment) && !empty($payment['pmtid'])) {
-        // Payment already exists, update
+    if (array_key_exists('pmtid', $tool) && !empty($tool['pmtid'])) {
+        // tool already exists, update
         $sql = "
-            UPDATE `payment`
+            UPDATE `tool`
             SET
             `date`='$esc_date'
             , `description` = '$esc_description'
@@ -249,11 +249,11 @@ function payment_save ($payment) {
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
-        $payment = module_invoke_api('payment', $payment, 'update');
+        $tool = module_invoke_api('tool', $tool, 'update');
     } else {
-        // Payment does not yet exist, create
+        // tool does not yet exist, create
         $sql = "
-            INSERT INTO `payment`
+            INSERT INTO `tool`
             (
                 `date`
                 , `description`
@@ -280,28 +280,28 @@ function payment_save ($payment) {
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
-        $payment['pmtid'] = mysql_insert_id();
-        $payment = module_invoke_api('payment', $payment, 'insert');
+        $tool['pmtid'] = mysql_insert_id();
+        $tool = module_invoke_api('tool', $tool, 'insert');
     }
-    return $payment;
+    return $tool;
 }
 
 /**
- * Delete the payment identified by $pmtid.
- * @param $pmtid The payment id.
+ * Delete the tool identified by $pmtid.
+ * @param $pmtid The tool id.
  */
-function payment_delete ($pmtid) {
-    $payment = crm_get_one('payment', array('pmtid'=>$pmtid));
-    $payment = module_invoke_api('payment', $payment, 'delete');
+function tool_delete ($pmtid) {
+    $tool = crm_get_one('tool', array('pmtid'=>$pmtid));
+    $tool = module_invoke_api('tool', $tool, 'delete');
     // Query database
     $esc_pmtid = mysql_real_escape_string($pmtid);
     $sql = "
-        DELETE FROM `payment`
+        DELETE FROM `tool`
         WHERE `pmtid`='$esc_pmtid'";
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Deleted payment with id ' . $pmtid);
+        message_register('Deleted tool with id ' . $pmtid);
     }
 }
 
@@ -311,14 +311,14 @@ function payment_delete ($pmtid) {
  *   'balance_due' - If true, only include contacts with a balance due.
  * @return An array of cids for matching contacts, or NULL if all match.
  */
-function payment_contact_filter ($filter) {
+function tool_contact_filter ($filter) {
     $cids = NULL;
     foreach ($filter as $key => $value) {
         $new_cids = array();
         switch ($key) {
             case 'balance_due':
                 if ($value) {
-                    $balances = payment_accounts();
+                    $balances = tool_accounts();
                     foreach ($balances as $cid => $bal) {
                         if ($bal['value'] > 0) {
                             $new_cids[] = $cid;
@@ -349,12 +349,12 @@ function payment_contact_filter ($filter) {
 // Table data structures ///////////////////////////////////////////////////////
 
 /**
- * Return a table structure for a table of payments.
+ * Return a table structure for a table of tools.
  *
- * @param $opts The options to pass to payment_data().
+ * @param $opts The options to pass to tool_data().
  * @return The table structure.
 */
-function payment_table ($opts) {
+function tool_table ($opts) {
     // Determine settings
     $export = false;
     foreach ($opts as $option => $value) {
@@ -364,16 +364,16 @@ function payment_table ($opts) {
                 break;
         }
     }
-    // Get payment data
-    $data = crm_get_data('payment', $opts);
+    // Get tool data
+    $data = crm_get_data('tool', $opts);
     if (count($data) < 1) {
         return array();
     }
     $cids = array();
-    // Create array of cids referenced from all payments
-    foreach ($data as $payment) {
-        $cids[$payment['credit_cid']] = true;
-        $cids[$payment['debit_cid']] = true;
+    // Create array of cids referenced from all tools
+    foreach ($data as $tool) {
+        $cids[$tool['credit_cid']] = true;
+        $cids[$tool['debit_cid']] = true;
     }
     $cids = array_keys($cids);
     // Get map from cid to contact
@@ -387,7 +387,7 @@ function payment_table ($opts) {
         "columns" => array()
     );
     // Add columns
-    if (user_access('payment_view')) { // Permission check
+    if (user_access('tool_view')) { // Permission check
         $table['columns'][] = array("title"=>'date');
         $table['columns'][] = array("title"=>'description');
         $table['columns'][] = array("title"=>'credit');
@@ -398,41 +398,41 @@ function payment_table ($opts) {
         $table['columns'][] = array("title"=>'notes');
     }
     // Add ops column
-    if (!$export && (user_access('payment_edit') || user_access('payment_delete'))) {
+    if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
     // Add rows
-    foreach ($data as $payment) {
+    foreach ($data as $tool) {
         $row = array();
-        if (user_access('payment_view')) {
-            $row[] = $payment['date'];
-            $row[] = $payment['description'];
-            if (array_key_exists('credit_cid', $payment) && $payment['credit_cid']) {
-                $contact = $cid_to_contact[$payment['credit_cid']];
+        if (user_access('tool_view')) {
+            $row[] = $tool['date'];
+            $row[] = $tool['description'];
+            if (array_key_exists('credit_cid', $tool) && $tool['credit_cid']) {
+                $contact = $cid_to_contact[$tool['credit_cid']];
                 $row[] = theme('contact_name', $contact, true);
             } else {
                 $row[] = '';
             }
-            if ($payment['debit_cid']) {
-                $contact = $cid_to_contact[$payment['debit_cid']];
+            if ($tool['debit_cid']) {
+                $contact = $cid_to_contact[$tool['debit_cid']];
                 $row[] = theme('contact_name', $contact, true);
             } else {
                 $row[] = '';
             }
-            $row[] = payment_format_currency($payment, true);
-            $row[] = $payment['method'];
-            $row[] = $payment['confirmation'];
-            $row[] = $payment['notes'];
+            $row[] = tool_format_currency($tool, true);
+            $row[] = $tool['method'];
+            $row[] = $tool['confirmation'];
+            $row[] = $tool['notes'];
         }
-        if (!$export && (user_access('payment_edit') || user_access('payment_delete'))) {
+        if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
             // Add ops column
             // TODO
             $ops = array();
-            if (user_access('payment_edit')) {
-               $ops[] = '<a href=' . crm_url('payment&pmtid=' . $payment['pmtid']) . '>edit</a>';
+            if (user_access('tool_edit')) {
+               $ops[] = '<a href=' . crm_url('tool&pmtid=' . $tool['pmtid']) . '>edit</a>';
             }
-            if (user_access('payment_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=payment&id=' . $payment['pmtid']) . '>delete</a>';
+            if (user_access('tool_delete')) {
+                $ops[] = '<a href=' . crm_url('delete&type=tool&id=' . $tool['pmtid']) . '>delete</a>';
             }
             $row[] = join(' ', $ops);
         }
@@ -444,12 +444,12 @@ function payment_table ($opts) {
 // Forms ///////////////////////////////////////////////////////////////////////
 
 /**
- * @return The form structure for adding a payment.
+ * @return The form structure for adding a tool.
 */
-function payment_add_form () {
+function tool_add_form () {
     
-    // Ensure user is allowed to edit payments
-    if (!user_access('payment_edit')) {
+    // Ensure user is allowed to edit tools
+    if (!user_access('tool_edit')) {
         return NULL;
     }
     
@@ -457,11 +457,11 @@ function payment_add_form () {
     $form = array(
         'type' => 'form'
         , 'method' => 'post'
-        , 'command' => 'payment_add'
+        , 'command' => 'tool_add'
         , 'fields' => array(
             array(
                 'type' => 'fieldset'
-                , 'label' => 'Add Payment'
+                , 'label' => 'Add tool'
                 , 'fields' => array(
                     array(
                         'type' => 'text'
@@ -493,7 +493,7 @@ function payment_add_form () {
                         'type' => 'select'
                         , 'label' => 'Method'
                         , 'name' => 'method'
-                        , 'options' => payment_method_options()
+                        , 'options' => tool_method_options()
                         , 'class' => 'float'
                     )
                     , array(
@@ -522,99 +522,99 @@ function payment_add_form () {
 }
 
 /**
- * Create a form structure for editing a payment.
+ * Create a form structure for editing a tool.
  *
- * @param $pmtid The id of the payment to edit.
+ * @param $pmtid The id of the tool to edit.
  * @return The form structure.
 */
-function payment_edit_form ($pmtid) {
-    // Ensure user is allowed to edit payments
-    if (!user_access('payment_edit')) {
-        error_register('User does not have permission: payment_edit');
+function tool_edit_form ($pmtid) {
+    // Ensure user is allowed to edit tools
+    if (!user_access('tool_edit')) {
+        error_register('User does not have permission: tool_edit');
         return NULL;
     }
-    // Get payment data
-    $data = crm_get_data('payment', array('pmtid'=>$pmtid));
+    // Get tool data
+    $data = crm_get_data('tool', array('pmtid'=>$pmtid));
     if (count($data) < 1) {
         return NULL;
     }
-    $payment = $data[0];
+    $tool = $data[0];
     $credit = '';
     $debit = '';
     // Add contact info
-    if ($payment['credit_cid']) {
-        $credit = theme('contact_name', $payment['credit_cid']);
+    if ($tool['credit_cid']) {
+        $credit = theme('contact_name', $tool['credit_cid']);
     }
-    if ($payment['debit_cid']) {
-        $debit = theme('contact_name', $payment['debit_cid']);
+    if ($tool['debit_cid']) {
+        $debit = theme('contact_name', $tool['debit_cid']);
     }
     // Create form structure
     $form = array(
         'type' => 'form'
         , 'method' => 'post'
-        , 'command' => 'payment_edit'
+        , 'command' => 'tool_edit'
         , 'hidden' => array(
-            'pmtid' => $payment['pmtid']
-            , 'code' => $payment['code']
+            'pmtid' => $tool['pmtid']
+            , 'code' => $tool['code']
         )
         , 'fields' => array(
             array(
                 'type' => 'fieldset'
-                , 'label' => 'Edit Payment'
+                , 'label' => 'Edit tool'
                 , 'fields' => array(
                     array(
                         'type' => 'text'
                         , 'label' => 'Credit'
                         , 'name' => 'credit_cid'
                         , 'description' => $credit
-                        , 'value' => $payment['credit_cid']
+                        , 'value' => $tool['credit_cid']
                         , 'autocomplete' => 'contact_name'
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Date'
                         , 'name' => 'date'
-                        , 'value' => $payment['date']
+                        , 'value' => $tool['date']
                         , 'class' => 'date'
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Description'
                         , 'name' => 'description'
-                        , 'value' => $payment['description']
+                        , 'value' => $tool['description']
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Amount'
                         , 'name' => 'value'
-                        , 'value' => payment_format_currency($payment, false)
+                        , 'value' => tool_format_currency($tool, false)
                     )
                     , array(
                         'type' => 'select'
                         , 'label' => 'Method'
                         , 'name' => 'method'
-                        , 'options' => payment_method_options()
-                        , 'selected' => $payment['method']
+                        , 'options' => tool_method_options()
+                        , 'selected' => $tool['method']
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Check/Rcpt Num'
                         , 'name' => 'confirmation'
-                        , 'value' => $payment['confirmation']
+                        , 'value' => $tool['confirmation']
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Debit'
                         , 'name' => 'debit_cid'
                         , 'description' => $debit
-                        , 'value' => $payment['debit_cid']
+                        , 'value' => $tool['debit_cid']
                         , 'autocomplete' => 'contact_name'
                     )
                     , array(
                         'type' => 'textarea'
                         , 'label' => 'Notes'
                         , 'name' => 'notes'
-                        , 'value' => $payment['notes']
+                        , 'value' => $tool['notes']
                     )
                     , array(
                         'type' => 'submit'
@@ -625,51 +625,51 @@ function payment_edit_form ($pmtid) {
         )
     );
     // Make data accessible for other modules modifying this form
-    $form['data']['payment'] = $payment;
+    $form['data']['tool'] = $tool;
     return $form;
 }
 
 /**
- * Return the payment form structure.
+ * Return the tool form structure.
  *
  * @param $pmtid The id of the key assignment to delete.
  * @return The form structure.
 */
-function payment_delete_form ($pmtid) {
+function tool_delete_form ($pmtid) {
     // Ensure user is allowed to delete keys
-    if (!user_access('payment_delete')) {
+    if (!user_access('tool_delete')) {
         return NULL;
     }
     // Get data
-    $data = crm_get_data('payment', array('pmtid'=>$pmtid));
-    $payment = $data[0];
+    $data = crm_get_data('tool', array('pmtid'=>$pmtid));
+    $tool = $data[0];
     // Construct key name
-    $amount = payment_format_currency($payment);
-    $payment_name = "Payment:$payment[pmtid] - $amount";
-    if ($payment['credit_cid']) {
-        $name = theme('contact_name', $payment['credit_cid']);
-        $payment_name .= " - Credit: $name";
+    $amount = tool_format_currency($tool);
+    $tool_name = "tool:$tool[pmtid] - $amount";
+    if ($tool['credit_cid']) {
+        $name = theme('contact_name', $tool['credit_cid']);
+        $tool_name .= " - Credit: $name";
     }
-    if ($payment['debit_cid']) {
-        $name = theme('contact_name', $payment['debit_cid']);
-        $payment_name .= " - Debit: $name";
+    if ($tool['debit_cid']) {
+        $name = theme('contact_name', $tool['debit_cid']);
+        $tool_name .= " - Debit: $name";
     }
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
-        'command' => 'payment_delete',
+        'command' => 'tool_delete',
         'hidden' => array(
-            'pmtid' => $payment['pmtid']
+            'pmtid' => $tool['pmtid']
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Delete Payment',
+                'label' => 'Delete tool',
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the payment "' . $payment_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the tool "' . $tool_name . '"? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -685,33 +685,33 @@ function payment_delete_form ($pmtid) {
 // Command handlers ////////////////////////////////////////////////////////////
 
 /**
- * Handle payment delete request.
+ * Handle tool delete request.
  *
  * @return The url to display on completion.
  */
-function command_payment_delete() {
+function command_tool_delete() {
     global $esc_post;
     // Verify permissions
-    if (!user_access('payment_delete')) {
-        error_register('Permission denied: payment_delete');
-        return crm_url('payment&pmtid=' . $esc_post['pmtid']);
+    if (!user_access('tool_delete')) {
+        error_register('Permission denied: tool_delete');
+        return crm_url('tool&pmtid=' . $esc_post['pmtid']);
     }
-    payment_delete($_POST['pmtid']);
-    return crm_url('payments');
+    tool_delete($_POST['pmtid']);
+    return crm_url('tools');
 }
 
 /**
- * Return the form structure for a payment filter.
+ * Return the form structure for a tool filter.
  * @return The form structure.
  */
-function payment_filter_form () {
+function tool_filter_form () {
     // Available filters
     $filters = array(
         'all' => 'All',
         'orphaned' => 'Orphaned'
     );
     // Default filter
-    $selected = empty($_SESSION['payment_filter_option']) ? 'all' : $_SESSION['payment_filter_option'];
+    $selected = empty($_SESSION['tool_filter_option']) ? 'all' : $_SESSION['tool_filter_option'];
     // Construct hidden fields to pass GET params
     $hidden = array();
     foreach ($_GET as $key=>$val) {
@@ -720,7 +720,7 @@ function payment_filter_form () {
     $form = array(
         'type' => 'form'
         , 'method' => 'get'
-        , 'command' => 'payment_filter'
+        , 'command' => 'tool_filter'
         , 'hidden' => $hidden,
         'fields' => array(
             array(
@@ -749,14 +749,14 @@ function payment_filter_form () {
 /**
  * @return An array of pages provided by this module.
  */
-function payment_page_list () {
+function tool_page_list () {
     $pages = array();
-    if (user_access('payment_view')) {
+    if (user_access('tool_view')) {
         $pages[] = 'accounts';
     }
-    if (user_access('payment_edit')) {
-        $pages[] = 'payments';
-        $pages[] = 'payment';
+    if (user_access('tool_edit')) {
+        $pages[] = 'tools';
+        $pages[] = 'tool';
     }
     return $pages;
 }
@@ -768,43 +768,43 @@ function payment_page_list () {
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
 */
-function payment_page (&$page_data, $page_name, $options) {
+function tool_page (&$page_data, $page_name, $options) {
     switch ($page_name) {
-        case 'payments':
-            page_set_title($page_data, 'Payments');
-            if (user_access('payment_edit')) {
-                $filter = array_key_exists('payment_filter', $_SESSION) ? $_SESSION['payment_filter'] : '';
-                $content = theme('form', crm_get_form('payment_add'));
-                $content .= theme('form', crm_get_form('payment_filter'));
+        case 'tools':
+            page_set_title($page_data, 'tools');
+            if (user_access('tool_edit')) {
+                $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
+                $content = theme('form', crm_get_form('tool_add'));
+                $content .= theme('form', crm_get_form('tool_filter'));
                 $opts = array(
                     'show_export' => true
                     , 'filter' => $filter
                 );
-                $content .= theme('table', 'payment', $opts);
+                $content .= theme('table', 'tool', $opts);
                 page_add_content_top($page_data, $content, 'View');
             }
             break;
-        case 'payment':
-            page_set_title($page_data, 'Payment');
-            if (user_access('payment_edit')) {
-                $content = theme('form', crm_get_form('payment_edit', $_GET['pmtid']));
+        case 'tool':
+            page_set_title($page_data, 'tool');
+            if (user_access('tool_edit')) {
+                $content = theme('form', crm_get_form('tool_edit', $_GET['pmtid']));
                 page_add_content_top($page_data, $content);
             }
             break;
         case 'accounts':
             page_set_title($page_data, 'Accounts');
-            if (user_access('payment_view')) {
-                $content = theme('table', 'payment_accounts', array('show_export'=>true));
+            if (user_access('tool_view')) {
+                $content = theme('table', 'tool_accounts', array('show_export'=>true));
                 page_add_content_top($page_data, $content);
             }
             break;
         case 'contact':
-            if (user_id() == $_GET['cid'] || user_access('payment_view')) {
-                $content = theme('table', 'payment_history', array('cid' => $_GET['cid']));
+            if (user_id() == $_GET['cid'] || user_access('tool_view')) {
+                $content = theme('table', 'tool_history', array('cid' => $_GET['cid']));
                 page_add_content_top($page_data, $content, 'Account');
-                page_add_content_bottom($page_data, theme('payment_account_info', $_GET['cid']), 'Account');
+                page_add_content_bottom($page_data, theme('tool_account_info', $_GET['cid']), 'Account');
                 if (function_exists('billing_revision')) {
-                    page_add_content_bottom($page_data, theme('payment_first_month', $_GET['cid']), 'Plan');
+                    page_add_content_bottom($page_data, theme('tool_first_month', $_GET['cid']), 'Plan');
                 }
             }
             break;
@@ -814,13 +814,13 @@ function payment_page (&$page_data, $page_name, $options) {
 // Command handlers ////////////////////////////////////////////////////////////
 
 /**
- * Handle payment add request.
+ * Handle tool add request.
  *
  * @return The url to display on completion.
  */
-function command_payment_add() {
-    $value = payment_parse_currency($_POST['amount'], $_POST['code']);
-    $payment = array(
+function command_tool_add() {
+    $value = tool_parse_currency($_POST['amount'], $_POST['code']);
+    $tool = array(
         'date' => $_POST['date']
         , 'description' => $_POST['description']
         , 'code' => $value['code']
@@ -831,45 +831,45 @@ function command_payment_add() {
         , 'confirmation' => $_POST['confirmation']
         , 'notes' => $_POST['notes']
     );
-    $payment = payment_save($payment);
-    message_register('1 payment added.');
-    return crm_url('payments');
+    $tool = tool_save($tool);
+    message_register('1 tool added.');
+    return crm_url('tools');
 }
 
 /**
- * Handle payment edit request.
+ * Handle tool edit request.
  *
  * @return The url to display on completion.
  */
-function command_payment_edit() {
+function command_tool_edit() {
     // Verify permissions
-    if (!user_access('payment_edit')) {
-        error_register('Permission denied: payment_edit');
-        return crm_url('payments');
+    if (!user_access('tool_edit')) {
+        error_register('Permission denied: tool_edit');
+        return crm_url('tools');
     }
-    // Parse and save payment
-    $payment = $_POST;
-    $value = payment_parse_currency($_POST['value'], $_POST['code']);
-    $payment['code'] = $value['code'];
-    $payment['value'] = $value['value'];
-    payment_save($payment);
-    message_register('1 payment updated.');
-    return crm_url('payments');
+    // Parse and save tool
+    $tool = $_POST;
+    $value = tool_parse_currency($_POST['value'], $_POST['code']);
+    $tool['code'] = $value['code'];
+    $tool['value'] = $value['value'];
+    tool_save($tool);
+    message_register('1 tool updated.');
+    return crm_url('tools');
 }
 
 /**
- * Handle payment filter request.
+ * Handle tool filter request.
  * @return The url to display on completion.
  */
-function command_payment_filter () {
+function command_tool_filter () {
     // Set filter in session
-    $_SESSION['payment_filter_option'] = $_GET['filter'];
+    $_SESSION['tool_filter_option'] = $_GET['filter'];
     // Set filter
     if ($_GET['filter'] == 'all') {
-        $_SESSION['payment_filter'] = array();
+        $_SESSION['tool_filter'] = array();
     }
     if ($_GET['filter'] == 'orphaned') {
-        $_SESSION['payment_filter'] = array('credit_cid'=>'0', 'debit_cid'=>'0');
+        $_SESSION['tool_filter'] = array('credit_cid'=>'0', 'debit_cid'=>'0');
     }
     // Construct query string
     $params = array();
@@ -882,5 +882,5 @@ function command_payment_filter () {
     if (!empty($params)) {
         $query = '&' . implode('&', $params);
     }
-    return crm_url('payments') . $query;
+    return crm_url('tools') . $query;
 }
