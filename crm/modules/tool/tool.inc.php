@@ -63,7 +63,8 @@ function tool_install($old_revision = 0) {
             `owner` varchar(255) NOT NULL,
             `notes` text NOT NULL,
             `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              PRIMARY KEY (`pmtid`)
+            `createdBy` varchar(255) NOT NULL,
+              PRIMARY KEY (`tlid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
         $res = mysql_query($sql);
@@ -103,7 +104,7 @@ function tool_install($old_revision = 0) {
  * Return data for one or more tools.
  *
  * @param $opts An associative array of options, possible keys are:
- *   'pmtid' If specified, returns a single tool with the matching id;
+ *   'tlid' If specified, returns a single tool with the matching id;
  *   'cid' If specified, returns all tools assigned to the contact with specified id;
  *   'filter' An array mapping filter names to filter values;
  *   'join' A list of tables to join to the tool table;
@@ -113,7 +114,7 @@ function tool_install($old_revision = 0) {
 function tool_data ($opts = array()) {
     $sql = "
         SELECT
-        `pmtid`
+        `tlid`
         , `date`
         , `description`
         , `code`
@@ -126,9 +127,9 @@ function tool_data ($opts = array()) {
         FROM `tool`
     ";
     $sql .= "WHERE 1 ";
-    if (array_key_exists('pmtid', $opts)) {
-        $pmtid = mysql_real_escape_string($opts['pmtid']);
-        $sql .= " AND `pmtid`='$pmtid' ";
+    if (array_key_exists('tlid', $opts)) {
+        $tlid = mysql_real_escape_string($opts['tlid']);
+        $sql .= " AND `tlid`='$tlid' ";
     }
     if (array_key_exists('cid', $opts)) {
         $cid = mysql_real_escape_string($opts['cid']);
@@ -185,7 +186,7 @@ function tool_data ($opts = array()) {
     $row = mysql_fetch_assoc($res);
     while ($row) {
         $tool = array(
-            'pmtid' => $row['pmtid']
+            'tlid' => $row['tlid']
             , 'date' => $row['date']
             , 'description' => $row['description']
             , 'code' => $row['code']
@@ -203,10 +204,10 @@ function tool_data ($opts = array()) {
 }
 
 /**
- * Save a tool to the database.  If the tool has a key called "pmtid"
+ * Save a tool to the database.  If the tool has a key called "tlid"
  * an existing tool will be updated in the database.  Otherwise a new tool
  * will be added to the database.  If a new tool is added to the database,
- * the returned array will have a "pmtid" field corresponding to the database id
+ * the returned array will have a "tlid" field corresponding to the database id
  * of the new tool.
  * 
  * @param $tool An associative array representing a tool.
@@ -222,7 +223,7 @@ function tool_save ($tool) {
         return NULL;
     }
     // Sanitize input
-    $esc_pmtid = mysql_real_escape_string($tool['pmtid']);
+    $esc_tlid = mysql_real_escape_string($tool['tlid']);
     $esc_date = mysql_real_escape_string($tool['date']);
     $esc_description = mysql_real_escape_string($tool['description']);
     $esc_code = mysql_real_escape_string($tool['code']);
@@ -233,7 +234,7 @@ function tool_save ($tool) {
     $esc_confirmation = mysql_real_escape_string($tool['confirmation']);
     $esc_notes = mysql_real_escape_string($tool['notes']);
     // Query database
-    if (array_key_exists('pmtid', $tool) && !empty($tool['pmtid'])) {
+    if (array_key_exists('tlid', $tool) && !empty($tool['tlid'])) {
         // tool already exists, update
         $sql = "
             UPDATE `tool`
@@ -248,7 +249,7 @@ function tool_save ($tool) {
             , `confirmation` = '$esc_confirmation'
             , `notes` = '$esc_notes'
             WHERE
-            `pmtid` = '$esc_pmtid'
+            `tlid` = '$esc_tlid'
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
@@ -283,28 +284,28 @@ function tool_save ($tool) {
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
-        $tool['pmtid'] = mysql_insert_id();
+        $tool['tlid'] = mysql_insert_id();
         $tool = module_invoke_api('tool', $tool, 'insert');
     }
     return $tool;
 }
 
 /**
- * Delete the tool identified by $pmtid.
- * @param $pmtid The tool id.
+ * Delete the tool identified by $tlid.
+ * @param $tlid The tool id.
  */
-function tool_delete ($pmtid) {
-    $tool = crm_get_one('tool', array('pmtid'=>$pmtid));
+function tool_delete ($tlid) {
+    $tool = crm_get_one('tool', array('tlid'=>$tlid));
     $tool = module_invoke_api('tool', $tool, 'delete');
     // Query database
-    $esc_pmtid = mysql_real_escape_string($pmtid);
+    $esc_tlid = mysql_real_escape_string($tlid);
     $sql = "
         DELETE FROM `tool`
-        WHERE `pmtid`='$esc_pmtid'";
+        WHERE `tlid`='$esc_tlid'";
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Deleted tool with id ' . $pmtid);
+        message_register('Deleted tool with id ' . $tlid);
     }
 }
 
@@ -432,10 +433,10 @@ function tool_table ($opts) {
             // TODO
             $ops = array();
             if (user_access('tool_edit')) {
-               $ops[] = '<a href=' . crm_url('tool&pmtid=' . $tool['pmtid']) . '>edit</a>';
+               $ops[] = '<a href=' . crm_url('tool&tlid=' . $tool['tlid']) . '>edit</a>';
             }
             if (user_access('tool_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=tool&id=' . $tool['pmtid']) . '>delete</a>';
+                $ops[] = '<a href=' . crm_url('delete&type=tool&id=' . $tool['tlid']) . '>delete</a>';
             }
             $row[] = join(' ', $ops);
         }
@@ -527,17 +528,17 @@ function tool_add_form () {
 /**
  * Create a form structure for editing a tool.
  *
- * @param $pmtid The id of the tool to edit.
+ * @param $tlid The id of the tool to edit.
  * @return The form structure.
 */
-function tool_edit_form ($pmtid) {
+function tool_edit_form ($tlid) {
     // Ensure user is allowed to edit tools
     if (!user_access('tool_edit')) {
         error_register('User does not have permission: tool_edit');
         return NULL;
     }
     // Get tool data
-    $data = crm_get_data('tool', array('pmtid'=>$pmtid));
+    $data = crm_get_data('tool', array('tlid'=>$tlid));
     if (count($data) < 1) {
         return NULL;
     }
@@ -557,7 +558,7 @@ function tool_edit_form ($pmtid) {
         , 'method' => 'post'
         , 'command' => 'tool_edit'
         , 'hidden' => array(
-            'pmtid' => $tool['pmtid']
+            'tlid' => $tool['tlid']
             , 'code' => $tool['code']
         )
         , 'fields' => array(
@@ -635,20 +636,20 @@ function tool_edit_form ($pmtid) {
 /**
  * Return the tool form structure.
  *
- * @param $pmtid The id of the key assignment to delete.
+ * @param $tlid The id of the key assignment to delete.
  * @return The form structure.
 */
-function tool_delete_form ($pmtid) {
+function tool_delete_form ($tlid) {
     // Ensure user is allowed to delete keys
     if (!user_access('tool_delete')) {
         return NULL;
     }
     // Get data
-    $data = crm_get_data('tool', array('pmtid'=>$pmtid));
+    $data = crm_get_data('tool', array('tlid'=>$tlid));
     $tool = $data[0];
     // Construct key name
     $amount = tool_format_currency($tool);
-    $tool_name = "tool:$tool[pmtid] - $amount";
+    $tool_name = "tool:$tool[tlid] - $amount";
     if ($tool['credit_cid']) {
         $name = theme('contact_name', $tool['credit_cid']);
         $tool_name .= " - Credit: $name";
@@ -663,7 +664,7 @@ function tool_delete_form ($pmtid) {
         'method' => 'post',
         'command' => 'tool_delete',
         'hidden' => array(
-            'pmtid' => $tool['pmtid']
+            'tlid' => $tool['tlid']
         ),
         'fields' => array(
             array(
@@ -697,9 +698,9 @@ function command_tool_delete() {
     // Verify permissions
     if (!user_access('tool_delete')) {
         error_register('Permission denied: tool_delete');
-        return crm_url('tool&pmtid=' . $esc_post['pmtid']);
+        return crm_url('tool&tlid=' . $esc_post['tlid']);
     }
-    tool_delete($_POST['pmtid']);
+    tool_delete($_POST['tlid']);
     return crm_url('tools');
 }
 
@@ -790,7 +791,7 @@ function tool_page (&$page_data, $page_name, $options) {
         case 'tool':
             page_set_title($page_data, 'tool');
             if (user_access('tool_edit')) {
-                $content = theme('form', crm_get_form('tool_edit', $_GET['pmtid']));
+                $content = theme('form', crm_get_form('tool_edit', $_GET['tlid']));
                 page_add_content_top($page_data, $content);
             }
             break;
