@@ -530,7 +530,7 @@ function day_pass_delete_form ($dpid) {
     $day_pass = $data[0];
     
     // Construct day pass name
-    $day_pass_name = "Day Pass ID: $day_pass[guid] Purchased:$day_pass[purchased] Used:$day_pass[used]";
+    $day_pass_name = "ID: $day_pass[guid], Purchased: $day_pass[purchased], Used: $day_pass[used]\n";
     
     // Create form structure
     $form = array(
@@ -547,7 +547,7 @@ function day_pass_delete_form ($dpid) {
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the day_pass "' . $day_pass_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete the day pass ' . $day_pass_name . 'This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
