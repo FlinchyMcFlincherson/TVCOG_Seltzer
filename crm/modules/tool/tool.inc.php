@@ -49,17 +49,20 @@ function tool_install($old_revision = 0) {
     if ($old_revision < 1) {
         $sql = '
             CREATE TABLE IF NOT EXISTS `tool` (
-              `pmtid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-              `date` date DEFAULT NULL,
-              `description` varchar(255) NOT NULL,
-              `code` varchar(8) NOT NULL,
-              `value` mediumint(8) NOT NULL,
-              `credit` mediumint(8) unsigned NOT NULL,
-              `debit` mediumint(8) unsigned NOT NULL,
-              `method` varchar(255) NOT NULL,
-              `confirmation` varchar(255) NOT NULL,
-              `notes` text NOT NULL,
-              `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `tlid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `mfgr` varchar(255) NOT NULL,
+            `modelNum` varchar(255) NOT NULL,
+            `serialNum` varchar(255) NOT NULL,
+            `class` varchar(255) NOT NULL,
+            `acquiredDate` date DEFAULT NULL,
+            `releasedDate` date DEFAULT NULL,
+            `purchasePrice` mediumint(8) NOT NULL,
+            `deprecSched` varchar(255) NOT NULL,
+            `recoveredCost` mediumint(8) NOT NULL,
+            `owner` varchar(255) NOT NULL,
+            `notes` text NOT NULL,
+            `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`pmtid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
