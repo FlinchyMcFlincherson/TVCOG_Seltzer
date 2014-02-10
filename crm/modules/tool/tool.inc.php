@@ -101,6 +101,30 @@ function tool_install($old_revision = 0) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
+ * Generate a descriptive string for a single tool.
+ *
+ * @param $tlid The tlid of the day pass to describe.
+ * @return The description string.
+ */
+function tool_description ($tlid) {
+    
+    // Get day pass data
+    $data = crm_get_data('tool', array('tlid' => $tlid));
+    if (empty($data)) {
+        return '';
+    }
+    $tool = $data[0];
+    
+    // Construct description
+    $description = 'Tool ID: ';
+    $description .= $tool['tlid'];
+    $description .= ' - '
+    $description .= $tool['name'];
+    
+    return $description;
+}
+
+/**
  * Return data for one or more tools.
  *
  * @param $opts An associative array of options, possible keys are:
@@ -114,16 +138,19 @@ function tool_install($old_revision = 0) {
 function tool_data ($opts = array()) {
     $sql = "
         SELECT
-        `tlid`
-        , `date`
-        , `description`
-        , `code`
-        , `value`
-        , `credit`
-        , `debit`
-        , `method`
-        , `confirmation`
-        , `notes`
+        `tlid
+        ,`name`
+        ,`mfgr`
+        ,`modelNum`
+        ,`serialNum`
+        ,`class`
+        ,`acquiredDate`
+        ,`releasedDate`
+        ,`purchasePrice`
+        ,`deprecSched`
+        ,`recoveredCost`
+        ,`owner`
+        ,`notes`
         FROM `tool`
     ";
     $sql .= "WHERE 1 ";
@@ -131,10 +158,7 @@ function tool_data ($opts = array()) {
         $tlid = mysql_real_escape_string($opts['tlid']);
         $sql .= " AND `tlid`='$tlid' ";
     }
-    if (array_key_exists('cid', $opts)) {
-        $cid = mysql_real_escape_string($opts['cid']);
-        $sql .= " AND (`debit`='$cid' OR `credit`='$cid') ";
-    }
+    /* TODO: This code could be used to implement a filter of some kind...
     if (array_key_exists('filter', $opts) && !empty($opts['filter'])) {
         foreach($opts['filter'] as $name => $value) {
             $esc_value = mysql_real_escape_string($value);
@@ -150,15 +174,15 @@ function tool_data ($opts = array()) {
                     break;
             }
         }
-    }
+    }*/
     // Specify the order the results should be returned in
     if (isset($opts['order'])) {
         $field_list = array();
         foreach ($opts['order'] as $field => $order) {
             $clause = '';
             switch ($field) {
-                case 'date':
-                    $clause .= "`date` ";
+                case 'name':
+                    $clause .= "`name` ";
                     break;
                 case 'created':
                     $clause .= "`created` ";
@@ -177,8 +201,8 @@ function tool_data ($opts = array()) {
             $sql .= " ORDER BY " . implode(',', $field_list) . " ";
         }
     } else {
-        // Default to date, created from newest to oldest
-        $sql .= " ORDER BY `date` DESC, `created` DESC ";
+        // Default to name, created from newest to oldest
+        $sql .= " ORDER BY `name` DESC, `created` DESC ";
     }
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
@@ -187,15 +211,18 @@ function tool_data ($opts = array()) {
     while ($row) {
         $tool = array(
             'tlid' => $row['tlid']
-            , 'date' => $row['date']
-            , 'description' => $row['description']
-            , 'code' => $row['code']
-            , 'value' => $row['value']
-            , 'credit_cid' => $row['credit']
-            , 'debit_cid' => $row['debit']
-            , 'method' => $row['method']
-            , 'confirmation' => $row['confirmation']
-            , 'notes' => $row['notes']
+            ,'name' => $row['name']
+            ,'mfgr' => $row['mfgr']
+            ,'modelNum' => $row['modelNum']
+            ,'serialNum' => $row['serialNum']
+            ,'class' => $row['class']
+            ,'acquiredDate' => $row['aquiredDate']
+            ,'releasedDate' => $row['releasedDate']
+            ,'purchasePrice' => $row['purchasedPrice']
+            ,'deprecSched' => $row['deprecSched']
+            ,'recoveredCost' => $row['recoveredCost']
+            ,'owner' => $row['owner']
+            ,'notes' => $row['notes']
         );
         $tools[] = $tool;
         $row = mysql_fetch_assoc($res);
@@ -224,30 +251,37 @@ function tool_save ($tool) {
     }
     // Sanitize input
     $esc_tlid = mysql_real_escape_string($tool['tlid']);
-    $esc_date = mysql_real_escape_string($tool['date']);
-    $esc_description = mysql_real_escape_string($tool['description']);
-    $esc_code = mysql_real_escape_string($tool['code']);
-    $esc_value = mysql_real_escape_string($tool['value']);
-    $esc_credit = mysql_real_escape_string($tool['credit_cid']);
-    $esc_debit = mysql_real_escape_string($tool['debit_cid']);
-    $esc_method = mysql_real_escape_string($tool['method']);
-    $esc_confirmation = mysql_real_escape_string($tool['confirmation']);
+    $esc_name = mysql_real_escape_string($tool['name']);
+    $esc_mfgr = mysql_real_escape_string($tool['mfgr']);
+    $esc_modelNum = mysql_real_escape_string($tool['modelNum']);
+    $esc_serialNum = mysql_real_escape_string($tool['serialNum']);
+    $esc_class = mysql_real_escape_string($tool['class']);
+    $esc_acquiredDate = mysql_real_escape_string($tool['acquiredDate']);
+    $esc_releasedDate = mysql_real_escape_string($tool['releasedDate']);
+    $esc_purchasePrice = mysql_real_escape_string($tool['purchasePrice']);
+    $esc_deprecSched = mysql_real_escape_string($tool['deprecSched']);
+    $esc_recoveredCost = mysql_real_escape_string($tool['recoveredCost']);
+    $esc_owner = mysql_real_escape_string($tool['owner']);
     $esc_notes = mysql_real_escape_string($tool['notes']);
+
     // Query database
     if (array_key_exists('tlid', $tool) && !empty($tool['tlid'])) {
         // tool already exists, update
         $sql = "
             UPDATE `tool`
             SET
-            `date`='$esc_date'
-            , `description` = '$esc_description'
-            , `code` = '$esc_code'
-            , `value` = '$esc_value'
-            , `credit` = '$esc_credit'
-            , `debit` = '$esc_debit'
-            , `method` = '$esc_method'
-            , `confirmation` = '$esc_confirmation'
-            , `notes` = '$esc_notes'
+            `name name
+            , `mfgr`='$esc_mfgr'
+            , `modelNum`='$esc_modelNum'
+            , `serialNum`='$esc_serialNum'
+            , `class`='$esc_class'
+            , `acquiredDate`='$esc_acquiredDate'
+            , `releasedDate`='$esc_releasedDate'
+            , `purchasePrice`='$esc_purchasePrice'
+            , `deprecSched`='$esc_deprecSched'
+            , `recoveredCost`='$esc_recoveredCost'
+            , `owner`='$esc_owner'
+            , `notes`='$esc_notes'
             WHERE
             `tlid` = '$esc_tlid'
         ";
@@ -259,26 +293,32 @@ function tool_save ($tool) {
         $sql = "
             INSERT INTO `tool`
             (
-                `date`
-                , `description`
-                , `code`
-                , `value`
-                , `credit`
-                , `debit`
-                , `method`
-                , `confirmation`
+                `name`
+                , `mfgr`
+                , `modelNum`
+                , `serialNum`
+                , `class`
+                , `acquiredDate`
+                , `releasedDate`
+                , `purchasePrice`
+                , `deprecSched`
+                , `recoveredCost`
+                , `owner`
                 , `notes`
             )
             VALUES
             (
-                '$esc_date'
-                , '$esc_description'
-                , '$esc_code'
-                , '$esc_value'
-                , '$esc_credit'
-                , '$esc_debit'
-                , '$esc_method'
-                , '$esc_confirmation'
+                '$esc_name'
+                , '$esc_mfgr'
+                , '$esc_modelNum'
+                , '$esc_serialNum'
+                , '$esc_class'
+                , '$esc_acquiredDate'
+                , '$esc_releasedDate'
+                , '$esc_purchasePrice'
+                , '$esc_deprecSched'
+                , '$esc_recoveredCost'
+                , '$esc_owner'
                 , '$esc_notes'
             )
         ";
@@ -305,49 +345,8 @@ function tool_delete ($tlid) {
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     if (mysql_affected_rows() > 0) {
-        message_register('Deleted tool with id ' . $tlid);
+        message_register('Deleted Tool ID: ' . $tlid);
     }
-}
-
-/**
- * Return an array of cids matching the given filters.
- * @param $filter An associative array of filters, keys are:
- *   'balance_due' - If true, only include contacts with a balance due.
- * @return An array of cids for matching contacts, or NULL if all match.
- */
-function tool_contact_filter ($filter) {
-    $cids = NULL;
-    foreach ($filter as $key => $value) {
-        $new_cids = array();
-        switch ($key) {
-            case 'balance_due':
-                if ($value) {
-                    $balances = tool_accounts();
-                    foreach ($balances as $cid => $bal) {
-                        if ($bal['value'] > 0) {
-                            $new_cids[] = $cid;
-                        }
-                    }
-                }
-                break;
-            default:
-                $new_cids = NULL;
-        }
-        if (is_null($cids)) {
-            $cids = $new_cids;
-        } else {
-            // This is inefficient and can be optimized
-            // -Ed 2013-06-08
-            $result = array();
-            foreach ($cids as $cid) {
-                if (in_array($cid, $new_cids)) {
-                    $result[] = $cid;
-                }
-            }
-            $cids = $result;
-        }
-    }
-    return $cids;
 }
 
 // Table data structures ///////////////////////////////////////////////////////
@@ -373,16 +372,6 @@ function tool_table ($opts) {
     if (count($data) < 1) {
         return array();
     }
-    $cids = array();
-    // Create array of cids referenced from all tools
-    foreach ($data as $tool) {
-        $cids[$tool['credit_cid']] = true;
-        $cids[$tool['debit_cid']] = true;
-    }
-    $cids = array_keys($cids);
-    // Get map from cid to contact
-    $contacts = crm_get_data('contact', array('cid'=>$cids));
-    $cid_to_contact = crm_map($contacts, 'cid');
     // Initialize table
     $table = array(
         "id" => '',
@@ -392,14 +381,19 @@ function tool_table ($opts) {
     );
     // Add columns
     if (user_access('tool_view')) { // Permission check
-        $table['columns'][] = array("title"=>'date');
-        $table['columns'][] = array("title"=>'description');
-        $table['columns'][] = array("title"=>'credit');
-        $table['columns'][] = array("title"=>'debit');
-        $table['columns'][] = array("title"=>'amount');
-        $table['columns'][] = array("title"=>'method');
-        $table['columns'][] = array("title"=>'confirmation');
-        $table['columns'][] = array("title"=>'notes');
+        $table['columns'][] = array("title"=>'Tool ID');
+        $table['columns'][] = array("title"=>'Name');
+        $table['columns'][] = array("title"=>'Manufacturer');
+        $table['columns'][] = array("title"=>'Model Number');
+        $table['columns'][] = array("title"=>'Serial Number');
+        $table['columns'][] = array("title"=>'Class');
+        $table['columns'][] = array("title"=>'Acquired');
+        $table['columns'][] = array("title"=>'Released');
+        $table['columns'][] = array("title"=>'Purchased Price');
+        $table['columns'][] = array("title"=>'Deprec Schedule');
+        $table['columns'][] = array("title"=>'Recovered Cost');
+        $table['columns'][] = array("title"=>'Owner');
+        $table['columns'][] = array("title"=>'Notes');
     }
     // Add ops column
     if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
@@ -409,23 +403,18 @@ function tool_table ($opts) {
     foreach ($data as $tool) {
         $row = array();
         if (user_access('tool_view')) {
-            $row[] = $tool['date'];
-            $row[] = $tool['description'];
-            if (array_key_exists('credit_cid', $tool) && $tool['credit_cid']) {
-                $contact = $cid_to_contact[$tool['credit_cid']];
-                $row[] = theme('contact_name', $contact, true);
-            } else {
-                $row[] = '';
-            }
-            if ($tool['debit_cid']) {
-                $contact = $cid_to_contact[$tool['debit_cid']];
-                $row[] = theme('contact_name', $contact, true);
-            } else {
-                $row[] = '';
-            }
-            $row[] = tool_format_currency($tool, true);
-            $row[] = $tool['method'];
-            $row[] = $tool['confirmation'];
+            $row[] = $tool['tlid'];
+            $row[] = $tool['name'];
+            $row[] = $tool['mfgr'];
+            $row[] = $tool['modelNum'];
+            $row[] = $tool['serialNum'];
+            $row[] = $tool['class'];
+            $row[] = $tool['acquiredDate'];
+            $row[] = $tool['releasedDate'];
+            $row[] = $tool['purchasePrice'];
+            $row[] = $tool['deprecSched'];
+            $row[] = $tool['recoveredCost'];
+            $row[] = $tool['owner'];
             $row[] = $tool['notes'];
         }
         if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
@@ -457,6 +446,22 @@ function tool_add_form () {
         return NULL;
     }
     
+    /*
+    name
+    mfgr
+    modelNum
+    serialNum
+    class
+    acquiredDate
+    releasedDate
+    purchasePrice
+    deprecSched
+    recoveredCost
+    owner
+    notes
+    */
+
+
     // Create form structure
     $form = array(
         'type' => 'form'
@@ -469,48 +474,76 @@ function tool_add_form () {
                 , 'fields' => array(
                     array(
                         'type' => 'text'
-                        , 'label' => 'Credit'
-                        , 'name' => 'credit'
-                        , 'autocomplete' => 'contact_name'
+                        , 'label' => 'Name'
+                        , 'name' => 'name'
                         , 'class' => 'focus float'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Date'
-                        , 'name' => 'date'
+                        , 'label' => 'Manufacturer'
+                        , 'name' => 'mfgr'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Model Number'
+                        , 'name' => 'modelNum'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Serial Number'
+                        , 'name' => 'serialNum'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Class'
+                        , 'name' => 'class'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Acquired Date'
+                        , 'name' => 'acquiredDate'
                         , 'value' => date("Y-m-d")
                         , 'class' => 'date float'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Description'
-                        , 'name' => 'description'
+                        , 'label' => 'Realeased Date'
+                        , 'name' => 'releasedDate'
+                        , 'value' => date("Y-m-d")
+                        , 'class' => 'date float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Purchased Price'
+                        , 'name' => 'purchasedPrice'
                         , 'class' => 'float'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Amount'
-                        , 'name' => 'amount'
-                        , 'class' => 'float'
-                    )
-                    , array(
-                        'type' => 'select'
-                        , 'label' => 'Method'
-                        , 'name' => 'method'
-                        , 'options' => tool_method_options()
+                        , 'label' => 'Depreciation Schedule'
+                        , 'name' => 'deprecSched'
                         , 'class' => 'float'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Check/Rcpt Num'
-                        , 'name' => 'confirmation'
+                        , 'label' => 'Recovered Cost'
+                        , 'name' => 'recoveredCost'
                         , 'class' => 'float'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Debit'
-                        , 'name' => 'debit'
-                        , 'autocomplete' => 'contact_name'
+                        , 'label' => 'Owner'
+                        , 'name' => 'owner'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'textArea'
+                        , 'label' => 'Notes'
+                        , 'name' => 'notes'
                         , 'class' => 'float'
                     )
                     , array(
@@ -532,90 +565,112 @@ function tool_add_form () {
  * @return The form structure.
 */
 function tool_edit_form ($tlid) {
-    // Ensure user is allowed to edit tools
-    if (!user_access('tool_edit')) {
-        error_register('User does not have permission: tool_edit');
+   // Ensure user is allowed to edit tools
+    if (!user_access('payment_edit')) {
+        error_register('User does not have permission: payment_edit');
         return NULL;
     }
     // Get tool data
-    $data = crm_get_data('tool', array('tlid'=>$tlid));
+    $data = crm_get_data('payment', array('pmtid'=>$pmtid));
     if (count($data) < 1) {
         return NULL;
     }
-    $tool = $data[0];
+    $payment = $data[0];
     $credit = '';
     $debit = '';
     // Add contact info
-    if ($tool['credit_cid']) {
-        $credit = theme('contact_name', $tool['credit_cid']);
+    if ($payment['credit_cid']) {
+        $credit = theme('contact_name', $payment['credit_cid']);
     }
-    if ($tool['debit_cid']) {
-        $debit = theme('contact_name', $tool['debit_cid']);
+    if ($payment['debit_cid']) {
+        $debit = theme('contact_name', $payment['debit_cid']);
     }
     // Create form structure
     $form = array(
         'type' => 'form'
         , 'method' => 'post'
-        , 'command' => 'tool_edit'
+        , 'command' => 'payment_edit'
         , 'hidden' => array(
-            'tlid' => $tool['tlid']
-            , 'code' => $tool['code']
+            'pmtid' => $payment['pmtid']
+            , 'code' => $payment['code']
         )
         , 'fields' => array(
             array(
                 'type' => 'fieldset'
-                , 'label' => 'Edit tool'
+                , 'label' => 'Edit Payment'
                 , 'fields' => array(
                     array(
                         'type' => 'text'
-                        , 'label' => 'Credit'
-                        , 'name' => 'credit_cid'
-                        , 'description' => $credit
-                        , 'value' => $tool['credit_cid']
-                        , 'autocomplete' => 'contact_name'
+                        , 'label' => 'Name'
+                        , 'name' => 'name'
+                        , 'value' => $tool['name']
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Date'
-                        , 'name' => 'date'
-                        , 'value' => $tool['date']
+                        , 'label' => 'Manufacturer'
+                        , 'name' => 'mfgr'
+                        , 'value' => $tool['mfgr']
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Model Number'
+                        , 'name' => 'modelNum'
+                        , 'value' => $tool['modelNum']
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Serial Number'
+                        , 'name' => 'serialNum'
+                        , 'value' => $tool['serialNum']
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Class'
+                        , 'name' => 'class'
+                        , 'value' => $tool['class']
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Acquired Date'
+                        , 'name' => 'acquiredDate'
+                        , 'value' => date("Y-m-d")
+                        , 'value' => $tool['acquiredDate']
                         , 'class' => 'date'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Description'
-                        , 'name' => 'description'
-                        , 'value' => $tool['description']
+                        , 'label' => 'Realeased Date'
+                        , 'name' => 'releasedDate'
+                        , 'value' => date("Y-m-d")
+                        , 'value' => $tool['releasedDate']
+                        , 'class' => 'date'
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Amount'
-                        , 'name' => 'value'
-                        , 'value' => tool_format_currency($tool, false)
-                    )
-                    , array(
-                        'type' => 'select'
-                        , 'label' => 'Method'
-                        , 'name' => 'method'
-                        , 'options' => tool_method_options()
-                        , 'selected' => $tool['method']
+                        , 'label' => 'Purchased Price'
+                        , 'name' => 'purchasedPrice'
+                        , 'value' => $tool['purchasedPrice']
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Check/Rcpt Num'
-                        , 'name' => 'confirmation'
-                        , 'value' => $tool['confirmation']
+                        , 'label' => 'Depreciation Schedule'
+                        , 'name' => 'deprecSched'
+                        , 'value' => $tool['deprecSched']
                     )
                     , array(
                         'type' => 'text'
-                        , 'label' => 'Debit'
-                        , 'name' => 'debit_cid'
-                        , 'description' => $debit
-                        , 'value' => $tool['debit_cid']
-                        , 'autocomplete' => 'contact_name'
+                        , 'label' => 'Recovered Cost'
+                        , 'name' => 'recoveredCost'
+                        , 'value' => $tool['recoveredCost']
                     )
                     , array(
-                        'type' => 'textarea'
+                        'type' => 'text'
+                        , 'label' => 'Owner'
+                        , 'name' => 'owner'
+                        , 'value' => $tool['owner']
+                    )
+                    , array(
+                        'type' => 'textArea'
                         , 'label' => 'Notes'
                         , 'name' => 'notes'
                         , 'value' => $tool['notes']
@@ -644,20 +699,8 @@ function tool_delete_form ($tlid) {
     if (!user_access('tool_delete')) {
         return NULL;
     }
-    // Get data
-    $data = crm_get_data('tool', array('tlid'=>$tlid));
-    $tool = $data[0];
-    // Construct key name
-    $amount = tool_format_currency($tool);
-    $tool_name = "tool:$tool[tlid] - $amount";
-    if ($tool['credit_cid']) {
-        $name = theme('contact_name', $tool['credit_cid']);
-        $tool_name .= " - Credit: $name";
-    }
-    if ($tool['debit_cid']) {
-        $name = theme('contact_name', $tool['debit_cid']);
-        $tool_name .= " - Debit: $name";
-    }
+    // Construct name
+    $tool_name = tool_description($tlid);
     // Create form structure
     $form = array(
         'type' => 'form',
@@ -708,7 +751,7 @@ function command_tool_delete() {
  * Return the form structure for a tool filter.
  * @return The form structure.
  */
-function tool_filter_form () {
+/*function tool_filter_form () {
     // Available filters
     $filters = array(
         'all' => 'All',
@@ -746,7 +789,7 @@ function tool_filter_form () {
         )
     );
     return $form;
-}
+}*/
 
 // Pages ///////////////////////////////////////////////////////////////////////
 
@@ -756,10 +799,9 @@ function tool_filter_form () {
 function tool_page_list () {
     $pages = array();
     if (user_access('tool_view')) {
-        $pages[] = 'accounts';
+        $pages[] = 'tools';
     }
     if (user_access('tool_edit')) {
-        $pages[] = 'tools';
         $pages[] = 'tool';
     }
     return $pages;
@@ -779,7 +821,7 @@ function tool_page (&$page_data, $page_name, $options) {
             if (user_access('tool_edit')) {
                 $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
                 $content = theme('form', crm_get_form('tool_add'));
-                $content .= theme('form', crm_get_form('tool_filter'));
+                //$content .= theme('form', crm_get_form('tool_filter'));
                 $opts = array(
                     'show_export' => true
                     , 'filter' => $filter
@@ -795,23 +837,6 @@ function tool_page (&$page_data, $page_name, $options) {
                 page_add_content_top($page_data, $content);
             }
             break;
-        case 'accounts':
-            page_set_title($page_data, 'Accounts');
-            if (user_access('tool_view')) {
-                $content = theme('table', 'tool_accounts', array('show_export'=>true));
-                page_add_content_top($page_data, $content);
-            }
-            break;
-        case 'contact':
-            if (user_id() == $_GET['cid'] || user_access('tool_view')) {
-                $content = theme('table', 'tool_history', array('cid' => $_GET['cid']));
-                page_add_content_top($page_data, $content, 'Account');
-                page_add_content_bottom($page_data, theme('tool_account_info', $_GET['cid']), 'Account');
-                if (function_exists('billing_revision')) {
-                    page_add_content_bottom($page_data, theme('tool_first_month', $_GET['cid']), 'Plan');
-                }
-            }
-            break;
     }
 }
 
@@ -823,16 +848,18 @@ function tool_page (&$page_data, $page_name, $options) {
  * @return The url to display on completion.
  */
 function command_tool_add() {
-    $value = tool_parse_currency($_POST['amount'], $_POST['code']);
     $tool = array(
-        'date' => $_POST['date']
-        , 'description' => $_POST['description']
-        , 'code' => $value['code']
-        , 'value' => $value['value']
-        , 'credit_cid' => $_POST['credit']
-        , 'debit_cid' => $_POST['debit']
-        , 'method' => $_POST['method']
-        , 'confirmation' => $_POST['confirmation']
+        'name' => $_POST['name']
+        , 'mfgr' => $_POST['mfgr']
+        , 'modelNum' => $_POST['modelNum']
+        , 'serialNum' => $_POST['serialNum']
+        , 'class' => $_POST['class']
+        , 'acquiredDate' => $_POST['acquiredDate']
+        , 'releasedDate' => $_POST['releasedDate']
+        , 'purchasePrice' => $_POST['purchasePrice']
+        , 'deprecSched' => $_POST['deprecSched']
+        , 'recoveredCost' => $_POST['recoveredCost']
+        , 'owner' => $_POST['owner']
         , 'notes' => $_POST['notes']
     );
     $tool = tool_save($tool);
@@ -853,9 +880,18 @@ function command_tool_edit() {
     }
     // Parse and save tool
     $tool = $_POST;
-    $value = tool_parse_currency($_POST['value'], $_POST['code']);
-    $tool['code'] = $value['code'];
-    $tool['value'] = $value['value'];
+    $tool['name'] = $value['name'];
+    $tool['mfgr'] = $value['mfgr'];
+    $tool['modelNum'] = $value['modelNum'];
+    $tool['serialNum'] = $value['serialNum'];
+    $tool['class'] = $value['class'];
+    $tool['acquiredDate'] = $value['acquiredDate'];
+    $tool['releasedDate'] = $value['releasedDate'];
+    $tool['purchasePrice'] = $value['purchasePrice'];
+    $tool['deprecSched'] = $value['deprecSched'];
+    $tool['recoveredCost'] = $value['recoveredCost'];
+    $tool['owner'] = $value['owner'];
+    $tool['notes'] = $value['notes'];
     tool_save($tool);
     message_register('1 tool updated.');
     return crm_url('tools');
@@ -865,6 +901,10 @@ function command_tool_edit() {
  * Handle tool filter request.
  * @return The url to display on completion.
  */
+
+/*TODO: This function, plus the "tool_filter_form" function, and the tool filter
+component of the tool_data function can be used to create tool filtering
+functionality
 function command_tool_filter () {
     // Set filter in session
     $_SESSION['tool_filter_option'] = $_GET['filter'];
@@ -887,4 +927,4 @@ function command_tool_filter () {
         $query = '&' . implode('&', $params);
     }
     return crm_url('tools') . $query;
-}
+}*/
