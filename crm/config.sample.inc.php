@@ -97,6 +97,9 @@ $config_modules[] = "profile_picture";
 // Track Member Training
 $config_modules[] = "training";
 
+// Track Tool Inventory
+$config_modules[] = "tool";
+
 // Track Member Discounts
 $config_modules[] = "discount";
 
@@ -113,13 +116,14 @@ $config_links = array(
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
     , 'trainings' => 'Trainings'
+    , 'tools' => 'Tools'
     , 'discounts' => 'Discounts'
     //, 'day_passes' => 'Day Passes'
-    , 'user_metas' => 'User Meta Data'
-    , 'plan_metas' => 'Plan Meta Data'
+    //, 'user_metas' => 'User Meta Data'
+    //, 'plan_metas' => 'Plan Meta Data'
     , 'payments' => 'Payments'
-    , 'accounts' => 'Accounts'
-    , 'reports' => 'Reports'
+    //, 'accounts' => 'Accounts'
+    //, 'reports' => 'Reports'
     , 'permissions' => 'Permissions'
     , 'upgrade' => 'Upgrade'
 );
