@@ -81,8 +81,8 @@ function tool_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('tool_view', 'tool_add', 'tool_edit', 'tool_delete')
-            , 'webAdmin' => array('tool_view', 'tool_add', 'tool_edit', 'tool_delete')
+            'director' => array('tool_view', 'tool_edit', 'tool_delete')
+            , 'webAdmin' => array('tool_view', 'tool_edit', 'tool_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -811,7 +811,7 @@ function tool_page (&$page_data, $page_name, $options) {
 
             //Add add tab
             
-            if (user_access('tool_add')) {
+            if (user_access('tool_edit')) {
                 page_add_content_top($page_data, theme('form', crm_get_form('tool_add')), 'Add');
             }
 
