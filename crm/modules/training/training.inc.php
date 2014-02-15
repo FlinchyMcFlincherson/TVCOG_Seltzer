@@ -641,13 +641,13 @@ function training_page (&$page_data, $page_name, $options) {
             if (user_access('training_view') || user_access('training_edit') || user_access('training_delete') || $cid == user_id()) {
                 $trainings = theme('table', 'training', array('cid' => $cid));
                 $trainings .= theme('training_add_form', $cid);
-                page_add_content_bottom($page_data, $trainings, 'Trainings');
+                page_add_content_bottom($page_data, $trainings, 'Training');
             }
             
             break;
         
         case 'trainings':
-            page_set_title($page_data, 'Trainings');
+            page_set_title($page_data, 'All Training Records');
             if (user_access('training_view')) {
                 $trainings = theme('table', 'training', array('join'=>array('contact', 'member'), 'show_export'=>true));
                 page_add_content_top($page_data, $training, 'View');
