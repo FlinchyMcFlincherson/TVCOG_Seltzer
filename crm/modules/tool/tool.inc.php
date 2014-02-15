@@ -118,7 +118,7 @@ function tool_description ($tlid) {
     // Construct description
     $description = 'Tool ID: ';
     $description .= $tool['tlid'];
-    $description .= ' - '
+    $description .= ' - ';
     $description .= $tool['name'];
     
     return $description;
@@ -138,7 +138,7 @@ function tool_description ($tlid) {
 function tool_data ($opts = array()) {
     $sql = "
         SELECT
-        `tlid
+        `tlid`
         ,`name`
         ,`mfgr`
         ,`modelNum`
@@ -158,7 +158,7 @@ function tool_data ($opts = array()) {
         $tlid = mysql_real_escape_string($opts['tlid']);
         $sql .= " AND `tlid`='$tlid' ";
     }
-    /* TODO: This code could be used to implement a filter of some kind...
+    //TODO: Fix this
     if (array_key_exists('filter', $opts) && !empty($opts['filter'])) {
         foreach($opts['filter'] as $name => $value) {
             $esc_value = mysql_real_escape_string($value);
@@ -174,7 +174,7 @@ function tool_data ($opts = array()) {
                     break;
             }
         }
-    }*/
+    }
     // Specify the order the results should be returned in
     if (isset($opts['order'])) {
         $field_list = array();
@@ -566,38 +566,28 @@ function tool_add_form () {
 */
 function tool_edit_form ($tlid) {
    // Ensure user is allowed to edit tools
-    if (!user_access('payment_edit')) {
-        error_register('User does not have permission: payment_edit');
+    if (!user_access('tool_edit')) {
+        error_register('User does not have permission: tool_edit');
         return NULL;
     }
     // Get tool data
-    $data = crm_get_data('payment', array('pmtid'=>$pmtid));
+    $data = crm_get_data('tool', array('tlid'=>$tltid));
     if (count($data) < 1) {
         return NULL;
     }
-    $payment = $data[0];
-    $credit = '';
-    $debit = '';
-    // Add contact info
-    if ($payment['credit_cid']) {
-        $credit = theme('contact_name', $payment['credit_cid']);
-    }
-    if ($payment['debit_cid']) {
-        $debit = theme('contact_name', $payment['debit_cid']);
-    }
+    $tool = $data[0];
     // Create form structure
     $form = array(
         'type' => 'form'
         , 'method' => 'post'
-        , 'command' => 'payment_edit'
+        , 'command' => 'tool_edit'
         , 'hidden' => array(
-            'pmtid' => $payment['pmtid']
-            , 'code' => $payment['code']
+            'tlid' => $tool['tlid']
         )
         , 'fields' => array(
             array(
                 'type' => 'fieldset'
-                , 'label' => 'Edit Payment'
+                , 'label' => 'Edit Tool'
                 , 'fields' => array(
                     array(
                         'type' => 'text'
@@ -697,10 +687,14 @@ function tool_edit_form ($tlid) {
 function tool_delete_form ($tlid) {
     // Ensure user is allowed to delete keys
     if (!user_access('tool_delete')) {
+        error_register('User does not have permission: tool_delete');
         return NULL;
     }
     // Construct name
     $tool_name = tool_description($tlid);
+    // Get Data
+    $data = crm_get_data('tool', array('tlid'=>$tlid));
+    $tool = $data[0];
     // Create form structure
     $form = array(
         'type' => 'form',
@@ -729,29 +723,12 @@ function tool_delete_form ($tlid) {
     return $form;
 }
 
-// Command handlers ////////////////////////////////////////////////////////////
-
-/**
- * Handle tool delete request.
- *
- * @return The url to display on completion.
- */
-function command_tool_delete() {
-    global $esc_post;
-    // Verify permissions
-    if (!user_access('tool_delete')) {
-        error_register('Permission denied: tool_delete');
-        return crm_url('tool&tlid=' . $esc_post['tlid']);
-    }
-    tool_delete($_POST['tlid']);
-    return crm_url('tools');
-}
-
 /**
  * Return the form structure for a tool filter.
  * @return The form structure.
+ * TODO: Fix this
  */
-/*function tool_filter_form () {
+function tool_filter_form () {
     // Available filters
     $filters = array(
         'all' => 'All',
@@ -789,7 +766,7 @@ function command_tool_delete() {
         )
     );
     return $form;
-}*/
+}
 
 // Pages ///////////////////////////////////////////////////////////////////////
 
@@ -817,11 +794,11 @@ function tool_page_list () {
 function tool_page (&$page_data, $page_name, $options) {
     switch ($page_name) {
         case 'tools':
-            page_set_title($page_data, 'tools');
+            page_set_title($page_data, 'Tools');
             if (user_access('tool_edit')) {
                 $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
                 $content = theme('form', crm_get_form('tool_add'));
-                //$content .= theme('form', crm_get_form('tool_filter'));
+                $content .= theme('form', crm_get_form('tool_filter'));
                 $opts = array(
                     'show_export' => true
                     , 'filter' => $filter
@@ -831,7 +808,7 @@ function tool_page (&$page_data, $page_name, $options) {
             }
             break;
         case 'tool':
-            page_set_title($page_data, 'tool');
+            page_set_title($page_data, 'Tool');
             if (user_access('tool_edit')) {
                 $content = theme('form', crm_get_form('tool_edit', $_GET['tlid']));
                 page_add_content_top($page_data, $content);
@@ -878,33 +855,33 @@ function command_tool_edit() {
         error_register('Permission denied: tool_edit');
         return crm_url('tools');
     }
-    // Parse and save tool
-    $tool = $_POST;
-    $tool['name'] = $value['name'];
-    $tool['mfgr'] = $value['mfgr'];
-    $tool['modelNum'] = $value['modelNum'];
-    $tool['serialNum'] = $value['serialNum'];
-    $tool['class'] = $value['class'];
-    $tool['acquiredDate'] = $value['acquiredDate'];
-    $tool['releasedDate'] = $value['releasedDate'];
-    $tool['purchasePrice'] = $value['purchasePrice'];
-    $tool['deprecSched'] = $value['deprecSched'];
-    $tool['recoveredCost'] = $value['recoveredCost'];
-    $tool['owner'] = $value['owner'];
-    $tool['notes'] = $value['notes'];
-    tool_save($tool);
+    tool_save($_POST['tlid']);
     message_register('1 tool updated.');
+    return crm_url('tools');
+}
+
+/**
+ * Handle tool delete request.
+ *
+ * @return The url to display on completion.
+ */
+function command_tool_delete() {
+    global $esc_post;
+    // Verify permissions
+    if (!user_access('tool_delete')) {
+        error_register('Permission denied: tool_delete');
+        return crm_url('tool&tlid=' . $esc_post['tlid']);
+    }
+    tool_delete($_POST['tlid']);
+    message_register('1 tool deleted.');
     return crm_url('tools');
 }
 
 /**
  * Handle tool filter request.
  * @return The url to display on completion.
+ * TODO: Update this
  */
-
-/*TODO: This function, plus the "tool_filter_form" function, and the tool filter
-component of the tool_data function can be used to create tool filtering
-functionality
 function command_tool_filter () {
     // Set filter in session
     $_SESSION['tool_filter_option'] = $_GET['filter'];
@@ -927,4 +904,4 @@ function command_tool_filter () {
         $query = '&' . implode('&', $params);
     }
     return crm_url('tools') . $query;
-}*/
+}
