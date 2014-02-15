@@ -506,14 +506,12 @@ function tool_add_form () {
                         'type' => 'text'
                         , 'label' => 'Acquired Date'
                         , 'name' => 'acquiredDate'
-                        , 'value' => date("Y-m-d")
                         , 'class' => 'date float'
                     )
                     , array(
                         'type' => 'text'
                         , 'label' => 'Realeased Date'
                         , 'name' => 'releasedDate'
-                        , 'value' => date("Y-m-d")
                         , 'class' => 'date float'
                     )
                     , array(
