@@ -81,8 +81,8 @@ function tool_install($old_revision = 0) {
             , '8' => 'webAdmin'
         );
         $default_perms = array(
-            'director' => array('tool_view', 'tool_edit', 'tool_delete')
-            , 'webAdmin' => array('tool_view', 'tool_edit', 'tool_delete')
+            'director' => array('tool_view', 'tool_add', 'tool_edit', 'tool_delete')
+            , 'webAdmin' => array('tool_view', 'tool_add', 'tool_edit', 'tool_delete')
         );
         foreach ($roles as $rid => $role) {
             $esc_rid = mysql_real_escape_string($rid);
@@ -800,11 +800,10 @@ function tool_page (&$page_data, $page_name, $options) {
 
             //Add view tab
             if (user_access('tool_view')) { 
-                $content .= theme('form', crm_get_form('tool_filter'));
-                $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
+                $content = theme('tool_filter_form');
                 $opts = array(
-                    'show_export' => true
-                    , 'filter' => $filter
+                    'filter'=>$_SESSION['tool_filter']
+                    , 'show_export' => true
                 );
                 $content .= theme('table', 'tool', $opts);
                 page_add_content_top($page_data, $content, 'View');
