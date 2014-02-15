@@ -383,17 +383,17 @@ function tool_table ($opts) {
     if (user_access('tool_view')) { // Permission check
         $table['columns'][] = array("title"=>'Tool ID');
         $table['columns'][] = array("title"=>'Name');
-        $table['columns'][] = array("title"=>'Manufacturer');
-        $table['columns'][] = array("title"=>'Model Number');
+        //$table['columns'][] = array("title"=>'Manufacturer');
+        //$table['columns'][] = array("title"=>'Model Number');
         $table['columns'][] = array("title"=>'Serial Number');
         $table['columns'][] = array("title"=>'Class');
         $table['columns'][] = array("title"=>'Acquired');
         $table['columns'][] = array("title"=>'Released');
-        $table['columns'][] = array("title"=>'Purchased Price');
-        $table['columns'][] = array("title"=>'Deprec Schedule');
-        $table['columns'][] = array("title"=>'Recovered Cost');
+        //$table['columns'][] = array("title"=>'Purchased Price');
+        //$table['columns'][] = array("title"=>'Deprec Schedule');
+        //$table['columns'][] = array("title"=>'Recovered Cost');
         $table['columns'][] = array("title"=>'Owner');
-        $table['columns'][] = array("title"=>'Notes');
+        //$table['columns'][] = array("title"=>'Notes');
     }
     // Add ops column
     if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
@@ -405,17 +405,17 @@ function tool_table ($opts) {
         if (user_access('tool_view')) {
             $row[] = $tool['tlid'];
             $row[] = $tool['name'];
-            $row[] = $tool['mfgr'];
-            $row[] = $tool['modelNum'];
+            //$row[] = $tool['mfgr'];
+            //$row[] = $tool['modelNum'];
             $row[] = $tool['serialNum'];
             $row[] = $tool['class'];
             $row[] = $tool['acquiredDate'];
             $row[] = $tool['releasedDate'];
-            $row[] = $tool['purchasePrice'];
-            $row[] = $tool['deprecSched'];
-            $row[] = $tool['recoveredCost'];
+            //$row[] = $tool['purchasePrice'];
+            //$row[] = $tool['deprecSched'];
+            //$row[] = $tool['recoveredCost'];
             $row[] = $tool['owner'];
-            $row[] = $tool['notes'];
+            //$row[] = $tool['notes'];
         }
         if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
             // Add ops column
