@@ -790,13 +790,18 @@ function tool_page_list () {
  * @param $options The array of options passed to theme('page').
 */
 function tool_page (&$page_data, $page_name, $options) {
+
     switch ($page_name) {
+
         case 'tools':
+
+            //Set page title
             page_set_title($page_data, 'Tools');
-            if (user_access('tool_edit')) {
-                $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
-                $content = theme('form', crm_get_form('tool_add'));
+
+            //Add view tab
+            if (user_access('tool_view')) { 
                 $content .= theme('form', crm_get_form('tool_filter'));
+                $filter = array_key_exists('tool_filter', $_SESSION) ? $_SESSION['tool_filter'] : '';
                 $opts = array(
                     'show_export' => true
                     , 'filter' => $filter
@@ -804,13 +809,29 @@ function tool_page (&$page_data, $page_name, $options) {
                 $content .= theme('table', 'tool', $opts);
                 page_add_content_top($page_data, $content, 'View');
             }
+
+            //Add add tab
+            
+            if (user_access('tool_add')) {
+                page_add_content_top($page_data, theme('form', crm_get_form('tool_add')), 'Add');
+            }
+
+            /*if (user_access('tool_add')) {
+                $content = theme('form', crm_get_form('tool_add'));
+                page_add_content_top($page_data, $content, 'Add');
+            }*/
+
             break;
+
         case 'tool':
+
             page_set_title($page_data, 'Tool');
+
             if (user_access('tool_edit')) {
                 $content = theme('form', crm_get_form('tool_edit', $_GET['tlid']));
-                page_add_content_top($page_data, $content);
+                page_add_content_top($page_data, $content, 'Edit');
             }
+
             break;
     }
 }
