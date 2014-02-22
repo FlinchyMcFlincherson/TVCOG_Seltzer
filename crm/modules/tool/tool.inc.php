@@ -671,6 +671,7 @@ function tool_edit_form ($tlid) {
             )
         )
     );
+
     // Make data accessible for other modules modifying this form
     $form['data']['tool'] = $tool;
     return $form;
@@ -810,19 +811,16 @@ function tool_page (&$page_data, $page_name, $options) {
             }
 
             //Add add tab
-            
             if (user_access('tool_edit')) {
                 page_add_content_top($page_data, theme('form', crm_get_form('tool_add')), 'Add');
             }
 
-            /*if (user_access('tool_add')) {
-                $content = theme('form', crm_get_form('tool_add'));
-                page_add_content_top($page_data, $content, 'Add');
-            }*/
-
             break;
 
         case 'tool':
+
+            //print_r($options);
+            //print_r($page_data);
 
             page_set_title($page_data, 'Tool');
 
