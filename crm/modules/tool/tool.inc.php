@@ -4,7 +4,7 @@
     Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>
     
     This file is part of the Seltzer CRM Project
-    tool_inventory.inc.php - Tool tracking module
+    tool.inc.php - Tool module
     
     Seltzer is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,33 +18,20 @@
     
     You should have received a copy of the GNU General Public License
     along with Seltzer.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/**
- * @return This module's revision number.  Each new release should increment
- * this number.
  */
-function tool_revision () {
-    return 1;
-}
-
-/**
- * @return An array of the permissions provided by this module.
- */
-function tool_permissions () {
-    return array(
-        'tool_view'
-        , 'tool_edit'
-        , 'tool_delete'
-    );
-}
 
 /**
  * Install or upgrade this module.
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
  */
+
+function tool_revision () {
+    return 1;
+}
+
 function tool_install($old_revision = 0) {
+
     // Create initial database table
     if ($old_revision < 1) {
         $sql = '
@@ -67,9 +54,11 @@ function tool_install($old_revision = 0) {
               PRIMARY KEY (`tlid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
+
         $res = mysql_query($sql);
-        if (!$res) crm_error(mysql_error());
-        // Set default permissions
+        if (!$res) die(mysql_error());
+
+        // Create default permissions
         $roles = array(
             '1' => 'authenticated'
             , '2' => 'member'
@@ -80,16 +69,17 @@ function tool_install($old_revision = 0) {
             , '7' => 'treasurer'
             , '8' => 'webAdmin'
         );
+
         $default_perms = array(
-            'director' => array('tool_view', 'tool_edit', 'tool_delete')
-            , 'webAdmin' => array('tool_view', 'tool_edit', 'tool_delete')
+            'member' => array('tool_view')
+            , 'director' => array('tool_view', 'tool_edit')
+            , 'webAdmin' => array('tool_view', 'tool_edit')
         );
+
         foreach ($roles as $rid => $role) {
-            $esc_rid = mysql_real_escape_string($rid);
             if (array_key_exists($role, $default_perms)) {
                 foreach ($default_perms[$role] as $perm) {
-                    $esc_perm = mysql_real_escape_string($perm);
-                    $sql = "INSERT INTO `role_permission` (`rid`, `permission`) VALUES ('$esc_rid', '$esc_perm')";
+                    $sql = "INSERT INTO `role_permission` (`rid`, `permission`) VALUES ('$rid', '$perm')";
                     $res = mysql_query($sql);
                     if (!$res) die(mysql_error());
                 }
@@ -101,286 +91,287 @@ function tool_install($old_revision = 0) {
 // DB to Object mapping ////////////////////////////////////////////////////////
 
 /**
- * Generate a descriptive string for a single tool.
- *
- * @param $tlid The tlid of the day pass to describe.
- * @return The description string.
- */
-function tool_description ($tlid) {
-    
-    // Get day pass data
-    $data = crm_get_data('tool', array('tlid' => $tlid));
-    if (empty($data)) {
-        return '';
-    }
-    $tool = $data[0];
-    
-    // Construct description
-    $description = 'Tool ID: ';
-    $description .= $tool['tlid'];
-    $description .= ' - ';
-    $description .= $tool['name'];
-    
-    return $description;
-}
-
-/**
  * Return data for one or more tools.
- *
+ * 
  * @param $opts An associative array of options, possible keys are:
- *   'tlid' If specified, returns a single tool with the matching id;
- *   'cid' If specified, returns all tools assigned to the contact with specified id;
- *   'filter' An array mapping filter names to filter values;
- *   'join' A list of tables to join to the tool table;
- *   'order' An array of associative arrays of the form 'field'=>'order'.
- * @return An array with each element representing a single tool.
-*/ 
+ *   'tlid' If specified, returns a single tool with the matching id,
+ *   'filter' An array mapping filter names to filter values
+ * @return An array with each element representing a tool.
+ */
 function tool_data ($opts = array()) {
-    $sql = "
-        SELECT
-        `tlid`
-        ,`name`
-        ,`mfgr`
-        ,`modelNum`
-        ,`serialNum`
-        ,`class`
-        ,`acquiredDate`
-        ,`releasedDate`
-        ,`purchasePrice`
-        ,`deprecSched`
-        ,`recoveredCost`
-        ,`owner`
-        ,`notes`
-        FROM `tool`
-    ";
-    $sql .= "WHERE 1 ";
-    if (array_key_exists('tlid', $opts)) {
-        $tlid = mysql_real_escape_string($opts['tlid']);
-        $sql .= " AND `tlid`='$tlid' ";
-    }
-    //TODO: Fix this
-    if (array_key_exists('filter', $opts) && !empty($opts['filter'])) {
-        foreach($opts['filter'] as $name => $value) {
-            $esc_value = mysql_real_escape_string($value);
+    
+    // Construct query for tools
+    $sql = "SELECT * FROM `tool` WHERE 1";
+    
+    /*
+    if (isset($opts['filter'])) {
+        foreach ($opts['filter'] as $name => $param) {
             switch ($name) {
-                case 'confirmation':
-                    $sql .= " AND (`confirmation`='$esc_value') ";
-                    break;
-                case 'credit_cid':
-                    $sql .= " AND (`credit`='$esc_value') ";
-                    break;
-                case 'debit_cid':
-                    $sql .= " AND (`debit`='$esc_value') ";
+                case 'flag':
+                    if ($param) {
+                        $sql .= " AND `tool`.`flag` <> 0";
+                    } else {
+                        $sql .= " AND `tool`.`flag` = 0";
+                    }
                     break;
             }
         }
     }
-    // Specify the order the results should be returned in
-    if (isset($opts['order'])) {
-        $field_list = array();
-        foreach ($opts['order'] as $field => $order) {
-            $clause = '';
-            switch ($field) {
-                case 'name':
-                    $clause .= "`name` ";
-                    break;
-                case 'created':
-                    $clause .= "`created` ";
-                    break;
-                default:
-                    continue;
-            }
-            if (strtolower($order) === 'asc') {
-                $clause .= 'ASC';
-            } else {
-                $clause .= 'DESC';
-            }
-            $field_list[] = $clause;
-        }
-        if (!empty($field_list)) {
-            $sql .= " ORDER BY " . implode(',', $field_list) . " ";
-        }
-    } else {
-        // Default to name, created from newest to oldest
-        $sql .= " ORDER BY `name` DESC, `created` DESC ";
+    */
+
+    if (!empty($opts['tlid'])) {
+        $tlid = mysql_real_escape_string($opts[tlid]);
+        $sql .= " AND `tool`.`tlid`='$tlid' ";
     }
+
+    // Query database for tools
     $res = mysql_query($sql);
-    if (!$res) crm_error(mysql_error());
+    if (!$res) { crm_error(mysql_error()); }
+    
+    // Store tools
     $tools = array();
     $row = mysql_fetch_assoc($res);
     while ($row) {
-        $tool = array(
-            'tlid' => $row['tlid']
-            ,'name' => $row['name']
-            ,'mfgr' => $row['mfgr']
-            ,'modelNum' => $row['modelNum']
-            ,'serialNum' => $row['serialNum']
-            ,'class' => $row['class']
-            ,'acquiredDate' => $row['aquiredDate']
-            ,'releasedDate' => $row['releasedDate']
-            ,'purchasePrice' => $row['purchasedPrice']
-            ,'deprecSched' => $row['deprecSched']
-            ,'recoveredCost' => $row['recoveredCost']
-            ,'owner' => $row['owner']
-            ,'notes' => $row['notes']
-        );
-        $tools[] = $tool;
+        $tools[] = $row;
         $row = mysql_fetch_assoc($res);
     }
+    
     return $tools;
 }
 
 /**
- * Save a tool to the database.  If the tool has a key called "tlid"
- * an existing tool will be updated in the database.  Otherwise a new tool
- * will be added to the database.  If a new tool is added to the database,
- * the returned array will have a "tlid" field corresponding to the database id
- * of the new tool.
+ * Generates an associative array mapping tool tlids to
+ * strings describing those tools.
  * 
- * @param $tool An associative array representing a tool.
- * @return A new associative array representing the tool.
+ * @param $opts Options to be passed to tool_data().
+ * @return The associative array of tool descriptions.
  */
-function tool_save ($tool) {
-    // Verify permissions and validate input
-    if (!user_access('tool_edit')) {
-        error_register('Permission denied: tool_edit');
-        return NULL;
+function tool_options ($opts = NULL) {
+    
+    // Get tool data
+    $tools = tool_data($opts);
+    
+    // Add option for each tool
+    $options = array();
+    foreach ($tools as $tool) {
+        $options[$tool['tlid']] = "Tool ID: $tool[tlid] - $tool[name]";
     }
-    if (empty($tool)) {
-        return NULL;
-    }
-    // Sanitize input
-    $esc_tlid = mysql_real_escape_string($tool['tlid']);
-    $esc_name = mysql_real_escape_string($tool['name']);
-    $esc_mfgr = mysql_real_escape_string($tool['mfgr']);
-    $esc_modelNum = mysql_real_escape_string($tool['modelNum']);
-    $esc_serialNum = mysql_real_escape_string($tool['serialNum']);
-    $esc_class = mysql_real_escape_string($tool['class']);
-    $esc_acquiredDate = mysql_real_escape_string($tool['acquiredDate']);
-    $esc_releasedDate = mysql_real_escape_string($tool['releasedDate']);
-    $esc_purchasePrice = mysql_real_escape_string($tool['purchasePrice']);
-    $esc_deprecSched = mysql_real_escape_string($tool['deprecSched']);
-    $esc_recoveredCost = mysql_real_escape_string($tool['recoveredCost']);
-    $esc_owner = mysql_real_escape_string($tool['owner']);
-    $esc_notes = mysql_real_escape_string($tool['notes']);
+    
+    return $options;
+}
 
-    // Query database
-    if (array_key_exists('tlid', $tool) && !empty($tool['tlid'])) {
-        // tool already exists, update
-        $sql = "
-            UPDATE `tool`
-            SET
-            `name name
-            , `mfgr`='$esc_mfgr'
-            , `modelNum`='$esc_modelNum'
-            , `serialNum`='$esc_serialNum'
-            , `class`='$esc_class'
-            , `acquiredDate`='$esc_acquiredDate'
-            , `releasedDate`='$esc_releasedDate'
-            , `purchasePrice`='$esc_purchasePrice'
-            , `deprecSched`='$esc_deprecSched'
-            , `recoveredCost`='$esc_recoveredCost'
-            , `owner`='$esc_owner'
-            , `notes`='$esc_notes'
-            WHERE
-            `tlid` = '$esc_tlid'
-        ";
-        $res = mysql_query($sql);
-        if (!$res) crm_error(mysql_error());
-        $tool = module_invoke_api('tool', $tool, 'update');
-    } else {
-        // tool does not yet exist, create
-        $sql = "
-            INSERT INTO `tool`
-            (
-                `name`
-                , `mfgr`
-                , `modelNum`
-                , `serialNum`
-                , `class`
-                , `acquiredDate`
-                , `releasedDate`
-                , `purchasePrice`
-                , `deprecSched`
-                , `recoveredCost`
-                , `owner`
-                , `notes`
-            )
-            VALUES
-            (
-                '$esc_name'
-                , '$esc_mfgr'
-                , '$esc_modelNum'
-                , '$esc_serialNum'
-                , '$esc_class'
-                , '$esc_acquiredDate'
-                , '$esc_releasedDate'
-                , '$esc_purchasePrice'
-                , '$esc_deprecSched'
-                , '$esc_recoveredCost'
-                , '$esc_owner'
-                , '$esc_notes'
-            )
-        ";
-        $res = mysql_query($sql);
-        if (!$res) crm_error(mysql_error());
-        $tool['tlid'] = mysql_insert_id();
-        $tool = module_invoke_api('tool', $tool, 'insert');
+// Command handlers ////////////////////////////////////////////////////////////
+
+/**
+ * Handle tool add request.
+ *
+ * @return The url to display on completion.
+ */
+function command_tool_add () {
+    $esc_name = mysql_real_escape_string($_POST['name']);
+    $esc_mfgr = mysql_real_escape_string($_POST['mfgr']);
+    $esc_modelNum = mysql_real_escape_string($_POST['modelNum']);
+    $esc_serialNum = mysql_real_escape_string($_POST['serialNum']);
+    $esc_class = mysql_real_escape_string($_POST['class']);
+    $esc_acquiredDate = mysql_real_escape_string($_POST['acquiredDate']);
+    $esc_releasedDate = mysql_real_escape_string($_POST['releasedDate']);
+    $esc_purchasePrice = mysql_real_escape_string($_POST['purchasePrice']);
+    $esc_deprecSched = mysql_real_escape_string($_POST['deprecSched']);
+    $esc_recoveredCost = mysql_real_escape_string($_POST['recoveredCost']);
+    $esc_owner = mysql_real_escape_string($_POST['owner']);
+    $esc_notes = mysql_real_escape_string($_POST['notes']);
+    
+    // Verify permissions
+    if (!user_access('tool_edit')) {
+        error_register('Permission denied: tool_add');
+        return crm_url('tools');
     }
-    return $tool;
+    
+    // Add tool
+    $sql = "
+        INSERT INTO `tool`
+        (`name`
+        , `mfgr`
+        , `modelNum`
+        , `serialNum`
+        , `class`
+        , `acquiredDate`
+        , `releasedDate`
+        , `purchasePrice`
+        , `deprecSched`
+        , `recoveredCost`
+        , `owner`
+        , `notes`)
+    VALUES
+        ('$esc_name'
+        , '$esc_mfgr'
+        , '$esc_modelNum'
+        , '$esc_serialNum'
+        , '$esc_class'
+        , '$esc_acquiredDate'
+        , '$esc_releasedDate'
+        , '$esc_purchasePrice'
+        , '$esc_deprecSched'
+        , '$esc_recoveredCost'
+        , '$esc_owner'
+        , '$esc_notes')
+    ";
+    
+    $res = mysql_query($sql);
+    if (!$res) crm_error(mysql_error());
+    message_register('1 tool added.');
+    return crm_url('tools');
 }
 
 /**
- * Delete the tool identified by $tlid.
- * @param $tlid The tool id.
+ * Handle tool update request.
+ *
+ * @return The url to display on completion.
  */
-function tool_delete ($tlid) {
-    $tool = crm_get_one('tool', array('tlid'=>$tlid));
-    $tool = module_invoke_api('tool', $tool, 'delete');
-    // Query database
-    $esc_tlid = mysql_real_escape_string($tlid);
+function command_tool_update () {
+    $esc_tlid = mysql_real_escape_string($_POST['tlid']);
+    $esc_name = mysql_real_escape_string($_POST['name']);
+    $esc_mfgr = mysql_real_escape_string($_POST['mfgr']);
+    $esc_modelNum = mysql_real_escape_string($_POST['modelNum']);
+    $esc_serialNum = mysql_real_escape_string($_POST['serialNum']);
+    $esc_class = mysql_real_escape_string($_POST['class']);
+    $esc_acquiredDate = mysql_real_escape_string($_POST['acquiredDate']);
+    $esc_releasedDate = mysql_real_escape_string($_POST['releasedDate']);
+    $esc_purchasePrice = mysql_real_escape_string($_POST['purchasePrice']);
+    $esc_deprecSched = mysql_real_escape_string($_POST['deprecSched']);
+    $esc_recoveredCost = mysql_real_escape_string($_POST['recoveredCost']);
+    $esc_owner = mysql_real_escape_string($_POST['owner']);
+    $esc_notes = mysql_real_escape_string($_POST['notes']);
+    
+    // Verify permissions
+    if (!user_access('tool_edit')) {
+        error_register('Permission denied: tool_edit');
+        return crm_url('tools');
+    }
+    
+    // Update tool
     $sql = "
-        DELETE FROM `tool`
-        WHERE `tlid`='$esc_tlid'";
+        UPDATE `tool`
+        SET
+            `name`='$esc_name',
+            `mfgr`='$esc_mfgr',
+            `modelNum`='$esc_modelNum',
+            `serialNum`='$esc_serialNum',
+            `class`='$esc_class',
+            `acquiredDate`='$esc_acquiredDate',
+            `releasedDate`='$esc_releasedDate',
+            `purchasePrice`='$esc_purchasePrice',
+            `deprecSched`='$esc_deprecSched',
+            `recoveredCost`='$esc_recoveredCost',
+            `owner`='$esc_owner',
+            `notes`='$esc_notes'
+        WHERE `tlid`='$esc_tlid'
+        ";
+    
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
-    if (mysql_affected_rows() > 0) {
-        message_register('Deleted Tool ID: ' . $tlid);
-    }
+    message_register('1 tool updated.');
+    return crm_url('tools');
 }
+
+/**
+ * Handle delete tool request.
+ *
+ * @return The url to display on completion.
+ */
+function command_tool_delete () {
+    global $esc_post;
+    
+    // Verify permissions
+    if (!user_access('tool_edit')) {
+        error_register('Permission denied: tool_edit');
+        return crm_url('tools');
+    }
+    
+    // Delete tool
+    $sql = "DELETE FROM `tool` WHERE `tlid`='$esc_post[tlid]'";
+    $res = mysql_query($sql);
+    if (!$res) crm_error(mysql_error());
+    
+    return crm_url('tools');
+}
+
+/**
+ * Handle tool import request.
+ *
+ * @return The url to display on completion.
+ */
+/*function command_tool_import () {
+    
+    if (!user_access('tool_edit')) {
+        error_register('User does not have permission: tool_edit');
+        return crm_url('tools');
+    }
+    
+    if (!array_key_exists('tool-file', $_FILES)) {
+        error_register('No tool file uploaded');
+        return crm_url('tools&tab=import');
+    }
+    
+    $csv = file_get_contents($_FILES['tool-file']['tmp_name']);
+    
+    $data = csv_parse($csv);
+    
+    foreach ($data as $row) {
+        
+        // Convert row keys to lowercase and remove spaces
+        foreach ($row as $key => $value) {
+            $new_key = str_replace(' ', '', strtolower($key));
+            unset($row[$key]);
+            $row[$new_key] = $value;
+        }
+        
+        // Add tool
+        $name = mysql_real_escape_string($row['toolname']);
+        $price = mysql_real_escape_string($row['price']);
+        $date = mysql_real_escape_string($row['date']);
+        $flag = mysql_real_escape_string($row['flag']);
+        $sql = "
+            INSERT INTO `tool`
+            (`name`,`price`,`date`,`flag`)
+            VALUES
+            ('$name','$price','$date','$flag')";
+        $res = mysql_query($sql);
+        if (!$res) crm_error(mysql_error());
+        $tlid = mysql_insert_id();
+    }
+    
+    return crm_url('tools');
+}*/
 
 // Table data structures ///////////////////////////////////////////////////////
 
 /**
- * Return a table structure for a table of tools.
+ * Return an abbreviated table structure representing tools.
  *
- * @param $opts The options to pass to tool_data().
+ * @param $opts Options to pass to tool_data().
  * @return The table structure.
-*/
-function tool_table ($opts) {
-    // Determine settings
-    $export = false;
-    foreach ($opts as $option => $value) {
-        switch ($option) {
-            case 'export':
-                $export = $value;
-                break;
-        }
+ */
+function tool_table ($opts = NULL) {
+    
+    // Ensure user is allowed to view tools
+    if (!user_access('tool_edit')) {
+        return NULL;
     }
+    
     // Get tool data
-    $data = crm_get_data('tool', $opts);
-    if (count($data) < 1) {
-        return array();
-    }
-    // Initialize table
+    $tools = tool_data($opts);
+    
+    // Create table structure
     $table = array(
-        "id" => '',
-        "class" => '',
-        "rows" => array(),
-        "columns" => array()
+        'id' => '',
+        'class' => '',
+        'rows' => array()
     );
+    
     // Add columns
-    if (user_access('tool_view')) { // Permission check
+    $table['columns'] = array();
+    if (user_access('tool_view')) {
         $table['columns'][] = array("title"=>'Tool ID');
         $table['columns'][] = array("title"=>'Name');
         //$table['columns'][] = array("title"=>'Manufacturer');
@@ -394,17 +385,23 @@ function tool_table ($opts) {
         //$table['columns'][] = array("title"=>'Recovered Cost');
         $table['columns'][] = array("title"=>'Owner');
         //$table['columns'][] = array("title"=>'Notes');
+        $table['columns'][] = array("title"=>'Ops');
     }
-    // Add ops column
-    if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
-        $table['columns'][] = array('title'=>'Ops','class'=>'');
-    }
-    // Add rows
-    foreach ($data as $tool) {
+
+    // Loop through tool data
+    foreach ($tools as $tool) {
+        
+        // Add tool data to table
         $row = array();
-        if (user_access('tool_view')) {
+
+        // Construct name
+        $tool_link = theme('tool_name', $tool, true);
+
+        if (user_access('tool_edit')) {
+            
+            // Add cells
             $row[] = $tool['tlid'];
-            $row[] = $tool['name'];
+            $row[] = $tool_link;
             //$row[] = $tool['mfgr'];
             //$row[] = $tool['modelNum'];
             $row[] = $tool['serialNum'];
@@ -417,20 +414,124 @@ function tool_table ($opts) {
             $row[] = $tool['owner'];
             //$row[] = $tool['notes'];
         }
-        if (!$export && (user_access('tool_edit') || user_access('tool_delete'))) {
-            // Add ops column
-            // TODO
-            $ops = array();
-            if (user_access('tool_edit')) {
-               $ops[] = '<a href=' . crm_url('tool&tlid=' . $tool['tlid']) . '>edit</a>';
-            }
-            if (user_access('tool_delete')) {
-                $ops[] = '<a href=' . crm_url('delete&type=tool&id=' . $tool['tlid']) . '>delete</a>';
-            }
+        
+        // Construct ops array
+        $ops = array();
+        
+        // Add edit op
+        if (user_access('tool_edit')) {
+            $ops[] = '<a href=' . crm_url('tool&tlid=' . $tool['tlid'] . '&tab=edit') . '>edit</a>';
+        }
+        
+        // Add delete op
+        if (user_access('tool_edit')) {
+            $ops[] = '<a href=' . crm_url('delete&type=tool&amp;id=' . $tool['tlid']) . '>delete</a>';
+        }
+        
+        // Add ops row
+        if (user_access('tool_edit')) {
             $row[] = join(' ', $ops);
         }
+        
+        // Add row to table
         $table['rows'][] = $row;
     }
+    
+    // Return table
+    return $table;
+}
+
+/**
+ * Return a detailed table structure representing tools.
+ *
+ * @param $opts Options to pass to tool_data().
+ * @return The table structure.
+ */
+function tool_detail_table ($opts = NULL) {
+    
+    // Ensure user is allowed to view tools
+    if (!user_access('tool_edit')) {
+        return NULL;
+    }
+    
+    // Get tool data
+    $tools = tool_data($opts);
+    
+    // Create table structure
+    $table = array(
+        'id' => '',
+        'class' => '',
+        'rows' => array()
+    );
+    
+    // Add columns
+    $table['columns'] = array();
+    if (user_access('tool_view')) {
+        $table['columns'][] = array("title"=>'Tool ID');
+        $table['columns'][] = array("title"=>'Name');
+        $table['columns'][] = array("title"=>'Manufacturer');
+        $table['columns'][] = array("title"=>'Model Number');
+        $table['columns'][] = array("title"=>'Serial Number');
+        $table['columns'][] = array("title"=>'Class');
+        $table['columns'][] = array("title"=>'Acquired');
+        $table['columns'][] = array("title"=>'Released');
+        $table['columns'][] = array("title"=>'Purchased Price');
+        $table['columns'][] = array("title"=>'Deprec Schedule');
+        $table['columns'][] = array("title"=>'Recovered Cost');
+        $table['columns'][] = array("title"=>'Owner');
+        $table['columns'][] = array("title"=>'Notes');
+    }
+
+    // Loop through tool data
+    foreach ($tools as $tool) {
+        
+        // Add tool data to table
+        $row = array();
+
+        // Construct name
+        $tool_link = theme('tool_name', $tool, true);
+
+        if (user_access('tool_edit')) {
+            
+            // Add cells
+            $row[] = $tool['tlid'];
+            $row[] = $tool['name'];
+            $row[] = $tool['mfgr'];
+            $row[] = $tool['modelNum'];
+            $row[] = $tool['serialNum'];
+            $row[] = $tool['class'];
+            $row[] = $tool['acquiredDate'];
+            $row[] = $tool['releasedDate'];
+            $row[] = $tool['purchasePrice'];
+            $row[] = $tool['deprecSched'];
+            $row[] = $tool['recoveredCost'];
+            $row[] = $tool['owner'];
+            $row[] = $tool['notes'];
+        }
+        
+        // Construct ops array
+        $ops = array();
+        
+        // Add edit op
+        if (user_access('tool_edit')) {
+            $ops[] = '<a href=' . crm_url('tool&tlid=' . $tool['tlid'] . '&tab=edit') . '>edit</a>';
+        }
+        
+        // Add delete op
+        if (user_access('tool_edit')) {
+            $ops[] = '<a href=' . crm_url('delete&type=tool&amp;id=' . $tool['tlid']) . '>delete</a>';
+        }
+        
+        // Add ops row
+        if (user_access('tool_edit')) {
+            $row[] = join(' ', $ops);
+        }
+        
+        // Add row to table
+        $table['rows'][] = $row;
+    }
+    
+    // Return table
     return $table;
 }
 
@@ -438,7 +539,7 @@ function tool_table ($opts) {
 
 /**
  * @return The form structure for adding a tool.
-*/
+ */
 function tool_add_form () {
     
     // Ensure user is allowed to edit tools
@@ -446,22 +547,6 @@ function tool_add_form () {
         return NULL;
     }
     
-    /*
-    name
-    mfgr
-    modelNum
-    serialNum
-    class
-    acquiredDate
-    releasedDate
-    purchasePrice
-    deprecSched
-    recoveredCost
-    owner
-    notes
-    */
-
-
     // Create form structure
     $form = array(
         'type' => 'form'
@@ -539,7 +624,7 @@ function tool_add_form () {
                         , 'class' => 'float'
                     )
                     , array(
-                        'type' => 'textArea'
+                        'type' => 'text'
                         , 'label' => 'Notes'
                         , 'name' => 'notes'
                         , 'class' => 'float'
@@ -557,28 +642,30 @@ function tool_add_form () {
 }
 
 /**
- * Create a form structure for editing a tool.
+ * Returns the form structure for editing a tool.
  *
- * @param $tlid The id of the tool to edit.
+ * @param $tlid The tlid of the tool to edit.
  * @return The form structure.
-*/
+ */
 function tool_edit_form ($tlid) {
-   // Ensure user is allowed to edit tools
+    
+    // Ensure user is allowed to edit tools
     if (!user_access('tool_edit')) {
-        error_register('User does not have permission: tool_edit');
         return NULL;
     }
+    
     // Get tool data
-    $data = crm_get_data('tool', array('tlid'=>$tltid));
-    if (count($data) < 1) {
+    $tools = tool_data(array('tlid'=>$tlid));
+    $tool = $tools[0];
+    if (!$tool) {
         return NULL;
     }
-    $tool = $data[0];
+    
     // Create form structure
     $form = array(
         'type' => 'form'
         , 'method' => 'post'
-        , 'command' => 'tool_edit'
+        , 'command' => 'tool_update'
         , 'hidden' => array(
             'tlid' => $tool['tlid']
         )
@@ -658,7 +745,7 @@ function tool_edit_form ($tlid) {
                         , 'value' => $tool['owner']
                     )
                     , array(
-                        'type' => 'textArea'
+                        'type' => 'text'
                         , 'label' => 'Notes'
                         , 'name' => 'notes'
                         , 'value' => $tool['notes']
@@ -671,45 +758,42 @@ function tool_edit_form ($tlid) {
             )
         )
     );
-
-    // Make data accessible for other modules modifying this form
-    $form['data']['tool'] = $tool;
+    
     return $form;
 }
 
 /**
- * Return the tool form structure.
+ * Return the form structure to delete a tool.
  *
- * @param $tlid The id of the key assignment to delete.
+ * @param $tlid The tlid of the tool to delete.
  * @return The form structure.
-*/
+ */
 function tool_delete_form ($tlid) {
-    // Ensure user is allowed to delete keys
-    if (!user_access('tool_delete')) {
-        error_register('User does not have permission: tool_delete');
+    
+    // Ensure user is allowed to edit tools
+    if (!user_access('tool_edit')) {
         return NULL;
     }
-    // Construct name
-    $tool_name = tool_description($tlid);
-    // Get Data
-    $data = crm_get_data('tool', array('tlid'=>$tlid));
-    $tool = $data[0];
+    
+    // Get tool description
+    $description = theme('tool_description', $tlid);
+    
     // Create form structure
     $form = array(
         'type' => 'form',
         'method' => 'post',
         'command' => 'tool_delete',
         'hidden' => array(
-            'tlid' => $tool['tlid']
+            'tlid' => $tlid,
         ),
         'fields' => array(
             array(
                 'type' => 'fieldset',
-                'label' => 'Delete tool',
+                'label' => 'Delete Tool',
                 'fields' => array(
                     array(
                         'type' => 'message',
-                        'value' => '<p>Are you sure you want to delete the tool "' . $tool_name . '"? This cannot be undone.',
+                        'value' => '<p>Are you sure you want to delete Tool ID #' . $description. '? This cannot be undone.',
                     ),
                     array(
                         'type' => 'submit',
@@ -719,53 +803,42 @@ function tool_delete_form ($tlid) {
             )
         )
     );
+    
     return $form;
 }
 
 /**
- * Return the form structure for a tool filter.
- * @return The form structure.
- * TODO: Fix this
+ * @return the form structure for a tool import form.
  */
-function tool_filter_form () {
-    // Available filters
-    $filters = array(
-        'all' => 'All',
-        'orphaned' => 'Orphaned'
-    );
-    // Default filter
-    $selected = empty($_SESSION['tool_filter_option']) ? 'all' : $_SESSION['tool_filter_option'];
-    // Construct hidden fields to pass GET params
-    $hidden = array();
-    foreach ($_GET as $key=>$val) {
-        $hidden[$key] = $val;
-    }
-    $form = array(
+/*function tool_import_form () {
+    return array(
         'type' => 'form'
-        , 'method' => 'get'
-        , 'command' => 'tool_filter'
-        , 'hidden' => $hidden,
-        'fields' => array(
+       , 'method' => 'post'
+        , 'enctype' => 'multipart/form-data'
+        , 'command' => 'tool_import'
+        , 'fields' => array(
             array(
-                'type' => 'fieldset'
-                , 'label' => 'Filter'
-                ,'fields' => array(
-                    array(
-                        'type' => 'select'
-                        , 'name' => 'filter'
-                        , 'options' => $filters
-                        , 'selected' => $selected
-                    ),
-                    array(
-                        'type' => 'submit'
-                        , 'value' => 'Filter'
-                    )
-                )
+                'type' => 'message'
+                , 'value' => '<p>To import tools, upload a csv.  The csv should have a header row with the following fields:</p>
+                <ul>
+                <li>Tool Name</li>
+                <li>Price</li>
+                <li>Date in YYYY-MM-DD format</li>
+                <li>Flag (Set to 1/0 signalling Y/N)</li>
+                </ul>'
+            )
+            , array(
+                'type' => 'file'
+                , 'label' => 'CSV File'
+                , 'name' => 'tool-file'
+            )
+            , array(
+                'type' => 'submit'
+                , 'value' => 'Import'
             )
         )
     );
-    return $form;
-}
+}*/
 
 // Pages ///////////////////////////////////////////////////////////////////////
 
@@ -776,148 +849,144 @@ function tool_page_list () {
     $pages = array();
     if (user_access('tool_view')) {
         $pages[] = 'tools';
-    }
-    if (user_access('tool_edit')) {
         $pages[] = 'tool';
     }
     return $pages;
 }
 
 /**
- * Page hook.  Adds module content to a page before it is rendered.
+ * Page hook.  Adds tool module content to a page before it is rendered.
  *
  * @param &$page_data Reference to data about the page being rendered.
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
-*/
+ */
 function tool_page (&$page_data, $page_name, $options) {
-
+    
     switch ($page_name) {
-
+        
         case 'tools':
-
-            //Set page title
+            
+            // Set page title
             page_set_title($page_data, 'Tools');
-
-            //Add view tab
-            if (user_access('tool_view')) { 
-                $content = theme('tool_filter_form');
-                $opts = array(
-                    'filter'=>$_SESSION['tool_filter']
-                    , 'show_export' => true
-                );
-                $content .= theme('table', 'tool', $opts);
-                page_add_content_top($page_data, $content, 'View');
+            
+            // Add view, add and import tabs
+            if (user_access('tool_view')) {
+                page_add_content_top($page_data, theme('table', 'tool'), 'View');
             }
-
-            //Add add tab
             if (user_access('tool_edit')) {
-                page_add_content_top($page_data, theme('form', crm_get_form('tool_add')), 'Add');
+                page_add_content_top($page_data, theme('tool_add_form'), 'Add');
+                //TODO
+                //page_add_content_top($page_data, theme('form', tool_import_form()), 'Import');
             }
-
+            
             break;
-
+        
         case 'tool':
-
-            //print_r($options);
-            //print_r($page_data);
-
-            page_set_title($page_data, 'Tool');
-
-            if (user_access('tool_edit')) {
-                $content = theme('form', crm_get_form('tool_edit', $_GET['tlid']));
-                page_add_content_top($page_data, $content, 'Edit');
+            
+            // Capture tool id
+            $tlid = $_GET['tlid'];
+            if (empty($tlid)) {
+                return;
             }
+            
+            // Set page title
+            page_set_title($page_data, 'Tool ID #' . theme('tool_description', $tlid));
 
+            // Add view tab
+            $view_content = '';
+            if (user_access('tool_view')) {
+                $view_content .= '<h3>Tool Info</h3>';
+                $opts = array(
+                    'tlid' => $tlid
+                    , 'ops' => false
+                );
+                $view_content .= theme('table_vertical', 'tool_detail', array('tlid' => $tlid));
+            }
+            if (!empty($view_content)) {
+                page_add_content_top($page_data, $view_content, 'View');
+            }
+            
+            // Add edit tab
+            if (user_access('tool_edit')) {
+                page_add_content_top($page_data, theme('tool_edit_form', $tlid), 'Edit');
+            }
+            
             break;
+
     }
 }
 
-// Command handlers ////////////////////////////////////////////////////////////
+// Themeing ////////////////////////////////////////////////////////////////////
 
 /**
- * Handle tool add request.
+ * Return the themed html for a tool table.
  *
- * @return The url to display on completion.
+ * @param $opts The options to pass to tool_data().
+ * @return The themed html string.
  */
-function command_tool_add() {
-    $tool = array(
-        'name' => $_POST['name']
-        , 'mfgr' => $_POST['mfgr']
-        , 'modelNum' => $_POST['modelNum']
-        , 'serialNum' => $_POST['serialNum']
-        , 'class' => $_POST['class']
-        , 'acquiredDate' => $_POST['acquiredDate']
-        , 'releasedDate' => $_POST['releasedDate']
-        , 'purchasePrice' => $_POST['purchasePrice']
-        , 'deprecSched' => $_POST['deprecSched']
-        , 'recoveredCost' => $_POST['recoveredCost']
-        , 'owner' => $_POST['owner']
-        , 'notes' => $_POST['notes']
-    );
-    $tool = tool_save($tool);
-    message_register('1 tool added.');
-    return crm_url('tools');
+function theme_tool_table ($opts = NULL) {
+    return theme('table', tool_table($opts));
 }
 
 /**
- * Handle tool edit request.
+ * Return the themed html for a tool add form.
  *
- * @return The url to display on completion.
+ * @return The themed html string.
  */
-function command_tool_edit() {
-    // Verify permissions
-    if (!user_access('tool_edit')) {
-        error_register('Permission denied: tool_edit');
-        return crm_url('tools');
-    }
-    tool_save($_POST['tlid']);
-    message_register('1 tool updated.');
-    return crm_url('tools');
+function theme_tool_add_form () {
+    return theme('form', tool_add_form());
 }
 
 /**
- * Handle tool delete request.
+ * Return the themed html for a tool edit form.
  *
- * @return The url to display on completion.
+ * @param $tlid The tlid of the tool to edit.
+ * @return The themed html string.
  */
-function command_tool_delete() {
-    global $esc_post;
-    // Verify permissions
-    if (!user_access('tool_delete')) {
-        error_register('Permission denied: tool_delete');
-        return crm_url('tool&tlid=' . $esc_post['tlid']);
-    }
-    tool_delete($_POST['tlid']);
-    message_register('1 tool deleted.');
-    return crm_url('tools');
+function theme_tool_edit_form ($tlid) {
+    return theme('form', tool_edit_form($tlid));
 }
 
 /**
- * Handle tool filter request.
- * @return The url to display on completion.
- * TODO: Update this
+ * Return the themed html description for a tool.
+ *
+ * @param $tlid The tlid of the tool.
+ * @return The themed html string.
  */
-function command_tool_filter () {
-    // Set filter in session
-    $_SESSION['tool_filter_option'] = $_GET['filter'];
-    // Set filter
-    if ($_GET['filter'] == 'all') {
-        $_SESSION['tool_filter'] = array();
+function theme_tool_description ($tlid) {
+    
+    // Get tool data
+    $data = tool_data(array('tlid' => $tlid));
+    if (count($data) < 1) {
+        return '';
     }
-    if ($_GET['filter'] == 'orphaned') {
-        $_SESSION['tool_filter'] = array('credit_cid'=>'0', 'debit_cid'=>'0');
-    }
-    // Construct query string
-    $params = array();
-    foreach ($_GET as $k=>$v) {
-        if ($k == 'command' || $k == 'filter' || $k == 'q') {
-            continue;
-        }
-        $params[] = urlencode($k) . '=' . urlencode($v);
-    }
-    if (!empty($params)) {
-        $query = '&' . implode('&', $params);
-    }
-    return crm_url('tools') . $query;
+    
+    $output = $data[0]['tlid'] . ': ' . $data[0]['name'];
+    
+    return $output;
 }
+
+/**
+ * Theme a tool name.
+ * 
+ * @param $tool The tool data structure or tlid.
+ * @param $link True if the name should be a link (default: false).
+ * @param $path The path that should be linked to.  The tlid will always be added
+ *   as a parameter.
+ *
+ * @return the name string.
+ */
+function theme_tool_name ($tool, $link = false, $path = 'tool') {
+    if (!is_array($tool)) {
+        $tool = crm_get_one('tool', array('tlid'=>$tool));
+    }
+    $name = $tool['name'];
+    if ($link) {
+        $url_opts = array('query' => array('tlid' => $tool['tlid']));
+        $name = crm_link($name, $path, $url_opts);
+    }
+    return $name;
+}
+
+
