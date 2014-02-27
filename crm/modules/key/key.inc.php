@@ -431,6 +431,7 @@ function key_add_form ($cid) {
 function key_edit_form ($kid) {
     // Ensure user is allowed to edit key
     if (!user_access('key_edit')) {
+        error_register('User does not have permission: key_edit');
         return NULL;
     }
     // Get key data

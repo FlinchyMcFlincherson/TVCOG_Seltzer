@@ -696,7 +696,7 @@ function contact_form ($opts = array()) {
                 , 'name' => 'emergencyEmail'
             )
             , array(
-                'type' => 'text'
+                'type' => 'textarea'
                 , 'label' => 'Notes'
                 , 'name' => 'notes'
             )
