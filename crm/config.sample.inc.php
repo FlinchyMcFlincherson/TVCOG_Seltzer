@@ -95,13 +95,16 @@ $config_modules[] = "profile_picture";
 //$config_modules[] = "mentor";
 
 // Track Member Training
-$config_modules[] = "training";
+//$config_modules[] = "training";
 
 // Track Tool Inventory
 $config_modules[] = "tool";
 
 // Track Member Discounts
 $config_modules[] = "discount";
+
+// Track Member Discounts
+//$config_modules[] = "foobar";
 
 // Track Day Passes
 $config_modules[] = "day_pass";
@@ -115,9 +118,10 @@ $config_links = array(
     , 'members' => 'Members'
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
-    , 'trainings' => 'Trainings'
+    //, 'trainings' => 'Training'
     , 'tools' => 'Tools'
     , 'discounts' => 'Discounts'
+    //, 'foobars' => 'Foobars'
     //, 'day_passes' => 'Day Passes'
     //, 'user_metas' => 'User Meta Data'
     //, 'plan_metas' => 'Plan Meta Data'
