@@ -980,12 +980,13 @@ function contact_page (&$page_data, $page_name) {
  * 
  * @param $contact The contact data structure or cid.
  * @param $link True if the name should be a link (default: false).
+ * @param $title True if the name is being formatted for a page title.
  * @param $path The path that should be linked to.  The cid will always be added
  *   as a parameter.
  *
  * @return the name string.
  */
-function theme_contact_name ($contact, $link = false, $path = 'contact') {
+function theme_contact_name ($contact, $link = false, $member = false, $path = 'contact') {
     if (!is_array($contact)) {
         $contact = crm_get_one('contact', array('cid'=>$contact));
     }
@@ -995,6 +996,9 @@ function theme_contact_name ($contact, $link = false, $path = 'contact') {
     if ($link) {
         $url_opts = array('query' => array('cid' => $contact['cid']));
         $name = crm_link($name, $path, $url_opts);
+    }
+    if ($member) {
+        $name = "Member: " . $name;
     }
     return $name;
 }
