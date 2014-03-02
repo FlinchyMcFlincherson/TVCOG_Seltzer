@@ -384,3 +384,24 @@ function theme_member_plan_name ($plan, $link = false, $path = 'plan') {
     }
     return $name;
 }
+
+/**
+ *Theme a membership end date as a link.
+ *
+ *@param $sid The sid of the membership plan to link to.
+ *@param $end The end date of the membership plan being linked to
+ *
+ *@return the HTML link string
+ */
+function theme_member_plan_link ($sid, $end) {
+
+    //Example path:
+    //http://seltzer.local/crm/index.php?q=membership&sid=n&tab=edit
+
+    $title = $end;
+    $path = 'membership&sid=' . $sid . '&tab=edit';
+    $url = base_path() . 'index.php';
+    $output = '<a href="' . $url . '?q=' . $path . '">' . $title . '</a>';
+
+    return $output;
+}
