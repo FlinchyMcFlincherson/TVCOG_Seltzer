@@ -30,6 +30,16 @@ function tool_revision () {
     return 1;
 }
 
+/**
+ * @return An array of the permissions provided by this module.
+ */
+function tool_permissions () {
+    return array(
+        'tool_view'
+        , 'tool_edit'
+    );
+}
+
 function tool_install($old_revision = 0) {
 
     // Create initial database table
