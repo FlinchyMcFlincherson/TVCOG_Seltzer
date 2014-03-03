@@ -121,7 +121,7 @@ function discount_description ($did) {
     $discount = $data[0];
     
     // Construct description
-    $description = 'DISCOUNT RECORD: ';
+    $description = 'Discount Record: ';
     $description .= $discount['did'];
     
     return $description;

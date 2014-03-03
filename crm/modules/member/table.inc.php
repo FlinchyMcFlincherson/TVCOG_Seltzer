@@ -136,6 +136,7 @@ function member_table ($opts = NULL) {
             // Construct name
             $contact = $member['contact'];
             $name_link = theme('contact_name', $contact, true);
+            
             // Construct membership info
             $recentMembership = end($member['membership']);
             $plan = '';
@@ -150,9 +151,15 @@ function member_table ($opts = NULL) {
                 else
                 {
                     $paidThrough = $recentMembership['end'];
+                    //If the user has membership editing rights, enable membership plan date links
+                    if (user_access('member_membership_edit')) {
+                        $membershipSID = $recentMembership['sid'];
+                        $paidThrough = theme('member_plan_link', $membershipSID, $paidThrough);
+                    }
                 }
                 
-            }          
+            }
+
             // Add cells
             if ($export) {
                 $row[] = $member['contact']['cid'];
