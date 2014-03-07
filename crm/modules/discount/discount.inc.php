@@ -430,7 +430,7 @@ function discount_add_form ($cid) {
                         'type' => 'text',
                         'label' => 'Applied On',
                         'name' => 'appliedOn',
-                        'value' => date("Y-m-d"),
+                        'value' => "0000-00-00",
                         'class' => 'date'
                     ),
                     array(
