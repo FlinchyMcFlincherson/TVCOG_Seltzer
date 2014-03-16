@@ -178,7 +178,7 @@ function member_data ($opts = array()) {
         $esc_cid = mysql_real_escape_string($member['cid']);
         $sql = "
             SELECT
-            `membership`.`sid`, `membership`.`cid`, `membership`.`start`, `membership`.`end`,
+            `membership`.`sid`, `membership`.`cid`, `membership`.`start`, `membership`.`end`,`membership`.`autoRenew`,
             `plan`.`pid`, `plan`.`name`, `plan`.`price`, `plan`.`active`, `plan`.`voting`
             FROM `membership`
             INNER JOIN `plan` ON `plan`.`pid` = `membership`.`pid`
@@ -197,6 +197,7 @@ function member_data ($opts = array()) {
                 'pid' => $row['pid'],
                 'start' => $row['start'],
                 'end' => $row['end'],
+                'autoRenew' => $row['autoRenew'],
                 'plan' => array(
                     'pid' => $row['pid'],
                     'name' => $row['name'],
@@ -422,6 +423,7 @@ function member_membership_data ($opts) {
             'pid' => $row['pid'],
             'start' => $row['start'],
             'end' => $row['end'],
+            'autoRenew' => $row['autoRenew'],
             'plan' => array(
                 'pid' => $row['pid'],
                 'name' => $row['name'],
@@ -448,6 +450,7 @@ function member_membership_save ($membership) {
     $esc_pid = mysql_real_escape_string($membership['pid']);
     $esc_start = mysql_real_escape_string($membership['start']);
     $esc_end = mysql_real_escape_string($membership['end']);
+    $esc_autoRenew = mysql_real_escape_string($membership['autoRenew']);
     if (isset($membership['sid'])) {
         // Update
         $sql = "
@@ -460,20 +463,27 @@ function member_membership_save ($membership) {
             $sql .= "`start`=NULL, ";
         }
         if ($esc_end) {
-            $sql .= "`end`='$esc_end' ";
+            $sql .= "`end`='$esc_end', ";
         } else {
-            $sql .= "`end`=NULL ";
+            $sql .= "`end`=NULL, ";
+        }
+        if ($esc_autoRenew) {
+            $sql .= "`autoRenew`='$esc_autoRenew' ";
+        } else {
+            $sql .= "`autoRenew`=NULL ";
         }
         $sql .= "WHERE `sid`='$esc_sid'";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());
-    } else {
+    } 
+    else 
+    {
         // Insert
         $sql = "
             INSERT INTO `membership`
-            (`cid`, `pid`, `start`, `end`)
+            (`cid`, `pid`, `start`, `end`, `autoRenew`)
             VALUES
-            ('$esc_cid', '$esc_pid', '$esc_start', '$esc_end')
+            ('$esc_cid', '$esc_pid', '$esc_start', '$esc_end', 'esc_autoRenew')
         ";
         $res = mysql_query($sql);
         if (!$res) crm_error(mysql_error());

@@ -49,6 +49,7 @@ function member_install($old_revision = 0) {
               `pid` mediumint(8) unsigned NOT NULL,
               `start` date NOT NULL,
               `end` date DEFAULT NULL,
+              `autoRenew` tinyint(1) NOT NULL,
               PRIMARY KEY (`sid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';

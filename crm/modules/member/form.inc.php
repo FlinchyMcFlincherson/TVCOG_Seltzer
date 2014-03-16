@@ -267,6 +267,11 @@ function member_membership_add_form ($cid) {
                         'value' => '0000-00-00'
                     ),
                     array(
+                        'type' => 'checkbox',
+                        'label' => 'Auto-renew',
+                        'name' => 'autoRenew'
+                    ),
+                    array(
                         'type' => 'submit',
                         'value' => 'Add'
                     )
@@ -501,6 +506,12 @@ function member_membership_edit_form ($sid) {
                         'name' => 'end',
                         'class' => 'date',
                         'value' => $membership['end']
+                    ),
+                    array(
+                        'type' => 'checkbox',
+                        'label' => 'Auto-renew',
+                        'name' => 'autoRenew',
+                        'checked' => $membership['autoRenew']
                     ),
                     array(
                         'type' => 'submit',
