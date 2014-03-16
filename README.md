@@ -1,7 +1,7 @@
 TVCOG Seltzer CRM 1.0 - A customization of [Seltzer CRM 4.0](https://github.com/elplatt/seltzer)
 
-Original Copyright Info:
-Seltzer CRM 0.4 - An open source CRM for hackerspaces
+Original Copyright Info:  
+Seltzer CRM 0.4 - An open source CRM for hackerspaces  
 Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>  
 Distributed under GPLv3 (see COPYING for more info)
 
