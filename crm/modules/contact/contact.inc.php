@@ -52,6 +52,10 @@ function contact_permissions () {
  * Install or upgrade this module.
  * @param $old_revision The last installed revision of this module, or 0 if the
  *   module has never been installed.
+ * TODO:
+ * -Move Emergency Contact fields into separate table
+ * -Move Member Number field into "Member" table
+ * -Move Partent Member Number field into parent/child relationship table
  */
 function contact_install ($old_revision = 0) {
     if ($old_revision < 1) {
