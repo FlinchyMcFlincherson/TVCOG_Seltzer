@@ -1,5 +1,7 @@
+TVCOG Seltzer CRM 1.0 - A customization of [Seltzer CRM 4.0](https://github.com/elplatt/seltzer)
 
-Seltzer CRM 0.4 - An open source CRM for hackerspaces  
+Original Copyright Info:
+Seltzer CRM 0.4 - An open source CRM for hackerspaces
 Copyright 2009-2013 Edward L. Platt <ed@elplatt.com>  
 Distributed under GPLv3 (see COPYING for more info)
 
@@ -8,31 +10,20 @@ Distributed under GPLv3 (see COPYING for more info)
 2. Installation and Usage
 
 ## Overview ##
-Seltzer CRM is a tool for managing membership data at hackerspaces and similar
-membership organizations.  It is designed to be useful to a typical hackerspace
-administrator without any training, and easy to tailor to the needs of a
-particular space through modularity rather than modification or configuration.
+TVCOG Seltzer is a tool for managing membership, and other data, at the [Tech Valley Center of Gravity](http://tvcog.net) makerspace in Troy, NY. It is a customization of the original Seltzer CRM code which has been modified specifically for the facilities and procedures of the Tech Valley Center of Gravity (TVCOG).
 
 The current features are:
-* Tracking of member contact and emergency contact info
+* Tracking of detailed member contact and emergency contact info
 * Tracking of membership levels and dates
-* Automated Billing
-* Amazon Payments and PayPal integration
 * Tracking of RFID key assignments
-* Track members' mentors
+* Tool inventory tracking
+* Membership dues discount tracking
 * Customizable permissions and roles
 
-Why create another CRM?  There are a number of powerful CRMs out there already,
-including the open source CiviCRM.  However, we found the complexity of existing
-CRMs to be an obstacle to recruiting and training volunteers at member-run
-organizations such as hackerspaces.  Seltzer CRM has a very basic feature set
-tailored to the needs of a hackerspace.
-
-Seltzer has been in production use at the i3 Detroit hackerspace in Ferndale, MI
-since 2010-12-20.
+TVCOG Seltzer has been in production use at the Tech Valley Center of Gravity in Troy, NY since 2013-10-21.
 
 ## Installation and Usage ##
-For more information on using Seltzer CRM, see the
-[wiki](https://github.com/elplatt/seltzer/wiki).
+For more information on using TVCOG Seltzer, see the
+[wiki](https://github.com/FlinchyMcFlincherson/TVCOG_Seltzer/wiki).
 Installation instructions are in the INSTALL file and on the wiki
-[here](https://github.com/elplatt/seltzer/wiki/Installing-Seltzer-CRM).
+[here](https://github.com/FlinchyMcFlincherson/TVCOG_Seltzer/wiki/Installing-Seltzer-CRM).

@@ -256,13 +256,15 @@ function member_membership_add_form ($cid) {
                         'type' => 'text',
                         'label' => 'Start',
                         'name' => 'start',
-                        'class' => 'date'
+                        'class' => 'date',
+                        'value' => date("Y-m-d")
                     ),
                     array(
                         'type' => 'text',
                         'label' => 'End',
                         'name' => 'end',
-                        'class' => 'date'
+                        'class' => 'date',
+                        'value' => '0000-00-00'
                     ),
                     array(
                         'type' => 'submit',
