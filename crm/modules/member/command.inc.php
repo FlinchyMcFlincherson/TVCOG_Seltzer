@@ -311,7 +311,8 @@ function command_member_membership_add () {
     $res = mysql_query($sql);
     if (!$res) crm_error(mysql_error());
     
-    return crm_url("contact&cid=$_POST[cid]");
+    //return crm_url("contact&cid=$_POST[cid]");
+    return crm_url("contact&cid=$_POST[cid]&tab=plan");
 }
 
 /**
