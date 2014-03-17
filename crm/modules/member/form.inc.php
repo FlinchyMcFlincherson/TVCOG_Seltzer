@@ -34,9 +34,6 @@ function member_add_form () {
     // Start with contact form
     $form = crm_get_form('contact');
     
-    // Generate default start date, first of current month
-    $start = date("Y-m-d");
-    
     // Change form command
     $form['command'] = 'member_add';
     
@@ -56,14 +53,14 @@ function member_add_form () {
                 'type' => 'text',
                 'label' => 'Start Date',
                 'name' => 'start',
-                'value' => $start,
+                'value' => date("Y-m-d"),
                 'class' => 'date'
             ),
             array(
                 'type' => 'text',
                 'label' => 'End Date',
                 'name' => 'end',
-                'value' => $end,
+                'value' => "0000-00-00",
                 'class' => 'date'
             )
         )
