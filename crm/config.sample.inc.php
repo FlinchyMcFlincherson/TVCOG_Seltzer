@@ -95,7 +95,7 @@ $config_modules[] = "profile_picture";
 //$config_modules[] = "mentor";
 
 // Track Member Training
-//$config_modules[] = "training";
+$config_modules[] = "training";
 
 // Track Tool Inventory
 $config_modules[] = "tool";
@@ -118,7 +118,7 @@ $config_links = array(
     , 'members' => 'Members'
     , 'plans' => 'Plans'
     , 'keys' => 'Keys'
-    //, 'trainings' => 'Training'
+    , 'trainings' => 'Training'
     , 'tools' => 'Tools'
     , 'discounts' => 'Discounts'
     //, 'foobars' => 'Foobars'
