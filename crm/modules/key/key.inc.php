@@ -551,13 +551,13 @@ function key_delete_form ($kid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function key_command ($command, &$url, &$params) {
+/*function key_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'keys';
             break;
     }
-}
+}*/
 
 /**
  * Handle key add request.

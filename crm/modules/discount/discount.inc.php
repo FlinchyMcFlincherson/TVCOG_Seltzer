@@ -594,13 +594,13 @@ function discount_delete_form ($did) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function discount_command ($command, &$url, &$params) {
+/*function discount_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'discounts';
             break;
     }
-}
+}*/
 
 /**
  * Handle discount add request.

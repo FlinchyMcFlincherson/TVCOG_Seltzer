@@ -755,13 +755,13 @@ function user_meta_delete_form ($umid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function user_meta_command ($command, &$url, &$params) {
+/*function user_meta_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'user_metas';
             break;
     }
-}
+}*/
 
 /**
  * Handle meta add request.

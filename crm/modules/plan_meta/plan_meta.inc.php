@@ -712,13 +712,13 @@ function plan_meta_delete_form ($pmid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function plan_meta_command ($command, &$url, &$params) {
+/*function plan_meta_command ($command, &$url, &$params) {
     switch ($command) {
         case 'plan_add':
             $params['tab'] = 'plan_metas';
             break;
     }
-}
+}*/
 
 /**
  * Handle meta add request.
