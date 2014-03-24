@@ -52,11 +52,11 @@ function core_page_list () {
 */
 function core_page (&$page_data, $page_name, $options) {
 
-    $latestNews = '<p>Welcome to the TVCOG.Seltzer member relationship management system!</p>';
+    $latestNews = '<p>Welcome to the TVCOG.Seltzer CMR!</p>';
 
     // Modify this variable with valid HTML between the apostrophes to display update text to users on login
     $latestNews = $latestNews . '
-        <p><strong>Latest System Updates:</strong><p>
+        <p><strong>Latest System Updates (03/24/2014):</strong><p>
         <p><strong>Fixed:</strong></p>
         <ul>
         <li>"Add Member" form now successfully saves membership end date values on commit</li>
