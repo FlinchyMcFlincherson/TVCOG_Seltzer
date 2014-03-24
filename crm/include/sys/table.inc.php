@@ -85,6 +85,7 @@ function theme_table ($table_id, $opts = NULL) {
         || $table_id === "discount" 
         || $table_id === "training"
         || $table_id === "tool"
+        || $table_id === "member_plan"
         ) {
         $class = "bigtable";
     } else {
