@@ -569,13 +569,13 @@ function day_pass_delete_form ($dpid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function day_pass_command ($command, &$url, &$params) {
+/*function day_pass_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'day_passes';
             break;
     }
-}
+}*/
 
 /**
  * Handle day pass add request.

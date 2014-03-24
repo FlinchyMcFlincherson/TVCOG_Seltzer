@@ -51,11 +51,18 @@ function core_page_list () {
  * @param $options The array of options passed to theme('page').
 */
 function core_page (&$page_data, $page_name, $options) {
+
+    $latestNews = '<p>Welcome to SeltzerCRM!</p>';
+
+    // Modify this variable with valid HTML between the apostrophes to display update text to users on login
+    $latestNews = $latestNews . '
+        <p><p>
+    ';
     
     switch ($page_name) {
         
         case '<front>':
-            page_add_content_top($page_data, '<p>Welcome to SeltzerCRM!</p>');
+            page_add_content_top($page_data, $latestNews);
             break;
         case 'install':
             page_add_content_top($page_data, theme('form', module_install_form()));

@@ -573,13 +573,13 @@ function mentor_delete_form ($cid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function mentor_command ($command, &$url, &$params) {
+/*function mentor_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'mentor';
             break;
     }
-}
+}*/
 
 /**
  * Handle mentor add request.

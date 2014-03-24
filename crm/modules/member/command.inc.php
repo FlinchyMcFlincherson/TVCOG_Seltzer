@@ -299,12 +299,18 @@ function command_member_membership_add () {
     if (!empty($esc_post['end'])) {
         $sql .= ", `end`";
     }
+    if (!empty($esc_post['autoRenew'])) {
+        $sql .= ", `autoRenew`";
+    }
     $sql .= ")
         VALUES
         ('$esc_post[cid]','$esc_post[pid]','$esc_post[start]'";
         
     if (!empty($esc_post['end'])) {
         $sql .= ",'$esc_post[end]'";
+    }
+    if (!empty($esc_post['autoRenew'])) {
+        $sql .= ",'$esc_post[autoRenew]'";
     }
     $sql .= ")";
     
@@ -339,6 +345,7 @@ function command_member_membership_update () {
         , 'pid' => $_POST['pid']
         , 'start' => $_POST['start']
         , 'end' => $_POST['end']
+        , 'autoRenew' => $_POST['autoRenew']
     );
     member_membership_save($membership);
     return crm_url("contact&cid=$_POST[cid]&tab=plan");

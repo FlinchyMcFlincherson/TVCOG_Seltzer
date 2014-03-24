@@ -551,13 +551,13 @@ function key_delete_form ($kid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
-function key_command ($command, &$url, &$params) {
+/*function key_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
             $params['tab'] = 'keys';
             break;
     }
-}
+}*/
 
 /**
  * Handle key add request.
@@ -648,7 +648,7 @@ function key_page (&$page_data, $page_name, $options) {
             break;
         
         case 'keys':
-            page_set_title($page_data, 'Keys');
+            page_set_title($page_data, 'All RFID Key Records');
             if (user_access('key_view')) {
                 $keys = theme('table', 'key', array('join'=>array('contact', 'member'), 'show_export'=>true));
                 page_add_content_top($page_data, $keys, 'View');

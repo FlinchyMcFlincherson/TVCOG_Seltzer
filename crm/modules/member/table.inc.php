@@ -72,6 +72,7 @@ function member_table ($opts = NULL) {
         }
         $table['columns'][] = array('title'=>'Membership','class'=>'');
         $table['columns'][] = array('title'=>'Paid Through','class'=>'');
+        $table['columns'][] = array('title'=>'Auto-renew','class'=>'');
         if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
             $table['columns'][] = array('title'=>'Company','class'=>'');
         }
@@ -141,6 +142,7 @@ function member_table ($opts = NULL) {
             $recentMembership = end($member['membership']);
             $plan = '';
             $paidThrough = '';
+            $autoRenew = '';
             /*TODO implement logic accounting for the fact that we use the "end date"
              of a membership to represent the "paid until" date in the old DB*/
             if (!empty($recentMembership)) {
@@ -157,9 +159,14 @@ function member_table ($opts = NULL) {
                         $paidThrough = theme('member_plan_link', $membershipSID, $paidThrough);
                     }
                 }
-                
+                if ($recentMembership['autoRenew'] == 1) {
+                    $autoRenew = "Yes";
+                }
+                else
+                {
+                    $autoRenew = "";
+                }
             }
-
             // Add cells
             if ($export) {
                 $row[] = $member['contact']['cid'];
@@ -177,6 +184,7 @@ function member_table ($opts = NULL) {
             }
             $row[] = $plan;
             $row[] = $paidThrough;
+            $row[] = $autoRenew;
             if (!array_key_exists('exclude', $opts) || !in_array('company', $opts['exclude'])) {
                 $row[] = $member['contact']['company'];
             }
@@ -248,7 +256,6 @@ function member_table ($opts = NULL) {
         // Add row to table
         $table['rows'][] = $row;
     }
-    
     // Return table
     return $table;
 }
@@ -341,8 +348,8 @@ function member_plan_table ($opts = NULL) {
     if (user_access('member_plan_edit')) {
         $table['columns'][] = array('title'=>'Name','class'=>'');
         $table['columns'][] = array('title'=>'Price','class'=>'');
-        $table['columns'][] = array('title'=>'Active','class'=>'');
         $table['columns'][] = array('title'=>'Voting','class'=>'');
+        $table['columns'][] = array('title'=>'Active','class'=>'');
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
 
@@ -356,8 +363,8 @@ function member_plan_table ($opts = NULL) {
             // Add cells
             $row[] = $plan['name'];
             $row[] = $plan['price'];
-            $row[] = $plan['active'] ? 'Yes' : 'No';
             $row[] = $plan['voting'] ? 'Yes' : 'No';
+            $row[] = $plan['active'] ? 'Yes' : 'No';
         }
         
         // Construct ops array
@@ -412,6 +419,7 @@ function member_membership_table ($opts = NULL) {
         $table['columns'][] = array('title'=>'End','class'=>'');
         $table['columns'][] = array('title'=>'Plan','class'=>'');
         $table['columns'][] = array('title'=>'Price','class'=>'');
+        $table['columns'][] = array('title'=>'Auto-renew','class'=>'');
     }
     // Add ops column
     if (user_access('member_membership_edit')) {
@@ -426,7 +434,14 @@ function member_membership_table ($opts = NULL) {
             $row[] = $membership['end'];
             $row[] = $membership['plan']['name'];
             $row[] = $membership['plan']['price'];
-        }
+            if ($membership['autoRenew'] == 1){
+                $row[] = "Yes";
+            }
+            else
+            {
+                $row[] = "No";
+            }
+        }   
         // Construct ops array
         $ops = array();
         // Add delete op

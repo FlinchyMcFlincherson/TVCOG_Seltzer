@@ -292,7 +292,7 @@ function theme_member_plan_description ($pid) {
         return '';
     }
     
-    $output = $data[0]['name'] . ' : ' . $data[0]['price'];
+    $output = $data[0]['name'] . ' Member';
     
     return $output;
 }
