@@ -52,11 +52,35 @@ function core_page_list () {
 */
 function core_page (&$page_data, $page_name, $options) {
 
-    $latestNews = '<p>Welcome to SeltzerCRM!</p>';
+    $latestNews = '<p>Welcome to the TVCOG.Seltzer member relationship management system!</p>';
 
     // Modify this variable with valid HTML between the apostrophes to display update text to users on login
     $latestNews = $latestNews . '
-        <p><p>
+        <p><strong>Latest System Updates:</strong><p>
+        <p><strong>Fixed:</strong></p>
+        <ul>
+        <li>"Add Member" form now successfully saves membership end date values on commit</li>
+        </ul>
+        <p><strong>Modified:</strong></p>
+        <ul>
+        <li>"Paid Through" values on member table are now clickable links leading to associated members membership entry</li>
+        <li>Membership functions can now track reoccurring billing subscriptions</li>
+        <li>Home page can now display update messages</li>
+        <li>Multiple tables made sortable</li>
+        <li>Disabled URL redirect to key tab on member add</li>
+        <li>"Payment" module reformatted for clarity</li>
+        </ul>
+        <p><strong>Added:</strong></p>
+        <ul>
+        <li>Discount management module</li>
+        <li>Tool inventory module</li>
+        <li>Day Pass tracking module</li>
+        </ul>
+        <p><strong>In Progress:</strong></p>
+        <ul>
+        <li>"Training" module</li>
+        </ul>
+
     ';
     
     switch ($page_name) {
