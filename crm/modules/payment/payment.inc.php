@@ -645,14 +645,14 @@ function payment_table ($opts) {
     );
     // Add columns
     if (user_access('payment_view')) { // Permission check
-        $table['columns'][] = array("title"=>'date');
-        $table['columns'][] = array("title"=>'description');
-        $table['columns'][] = array("title"=>'credit');
-        $table['columns'][] = array("title"=>'debit');
-        $table['columns'][] = array("title"=>'amount');
-        $table['columns'][] = array("title"=>'method');
-        $table['columns'][] = array("title"=>'confirmation');
-        $table['columns'][] = array("title"=>'notes');
+        $table['columns'][] = array("title"=>'Date');
+        $table['columns'][] = array("title"=>'Description');
+        $table['columns'][] = array("title"=>'Credit');
+        $table['columns'][] = array("title"=>'Debit');
+        $table['columns'][] = array("title"=>'Amount');
+        $table['columns'][] = array("title"=>'Method');
+        $table['columns'][] = array("title"=>'Check/Rcpt Num');
+        $table['columns'][] = array("title"=>'Notes');
     }
     // Add ops column
     if (!$export && (user_access('payment_edit') || user_access('payment_delete'))) {
@@ -837,13 +837,6 @@ function payment_add_form () {
                 , 'fields' => array(
                     array(
                         'type' => 'text'
-                        , 'label' => 'Credit'
-                        , 'name' => 'credit'
-                        , 'autocomplete' => 'contact_name'
-                        , 'class' => 'focus float'
-                    )
-                    , array(
-                        'type' => 'text'
                         , 'label' => 'Date'
                         , 'name' => 'date'
                         , 'value' => date("Y-m-d")
@@ -853,6 +846,20 @@ function payment_add_form () {
                         'type' => 'text'
                         , 'label' => 'Description'
                         , 'name' => 'description'
+                        , 'class' => 'float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Credit'
+                        , 'name' => 'credit'
+                        , 'autocomplete' => 'contact_name'
+                        , 'class' => 'focus float'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Debit'
+                        , 'name' => 'debit'
+                        , 'autocomplete' => 'contact_name'
                         , 'class' => 'float'
                     )
                     , array(
@@ -875,11 +882,9 @@ function payment_add_form () {
                         , 'class' => 'float'
                     )
                     , array(
-                        'type' => 'text'
-                        , 'label' => 'Debit'
-                        , 'name' => 'debit'
-                        , 'autocomplete' => 'contact_name'
-                        , 'class' => 'float'
+                        'type' => 'textarea'
+                        , 'label' => 'Notes'
+                        , 'name' => 'notes'
                     )
                     , array(
                         'type' => 'submit'
@@ -936,14 +941,6 @@ function payment_edit_form ($pmtid) {
                 , 'fields' => array(
                     array(
                         'type' => 'text'
-                        , 'label' => 'Credit'
-                        , 'name' => 'credit_cid'
-                        , 'description' => $credit
-                        , 'value' => $payment['credit_cid']
-                        , 'autocomplete' => 'contact_name'
-                    )
-                    , array(
-                        'type' => 'text'
                         , 'label' => 'Date'
                         , 'name' => 'date'
                         , 'value' => $payment['date']
@@ -954,6 +951,22 @@ function payment_edit_form ($pmtid) {
                         , 'label' => 'Description'
                         , 'name' => 'description'
                         , 'value' => $payment['description']
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Credit'
+                        , 'name' => 'credit_cid'
+                        , 'description' => $credit
+                        , 'value' => $payment['credit_cid']
+                        , 'autocomplete' => 'contact_name'
+                    )
+                    , array(
+                        'type' => 'text'
+                        , 'label' => 'Debit'
+                        , 'name' => 'debit_cid'
+                        , 'description' => $debit
+                        , 'value' => $payment['debit_cid']
+                        , 'autocomplete' => 'contact_name'
                     )
                     , array(
                         'type' => 'text'
@@ -973,14 +986,6 @@ function payment_edit_form ($pmtid) {
                         , 'label' => 'Check/Rcpt Num'
                         , 'name' => 'confirmation'
                         , 'value' => $payment['confirmation']
-                    )
-                    , array(
-                        'type' => 'text'
-                        , 'label' => 'Debit'
-                        , 'name' => 'debit_cid'
-                        , 'description' => $debit
-                        , 'value' => $payment['debit_cid']
-                        , 'autocomplete' => 'contact_name'
                     )
                     , array(
                         'type' => 'textarea'

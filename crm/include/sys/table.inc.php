@@ -79,6 +79,7 @@ function theme_table ($table_id, $opts = NULL) {
     }
 
     //If any of the below tables are being themed, make them "Bigtable" class
+    // TODO Create a separate function that themes tables as "Bigtables"
     if ($table_id === "member" 
         || $table_id === "contact" 
         || $table_id === "key" 
@@ -86,6 +87,7 @@ function theme_table ($table_id, $opts = NULL) {
         || $table_id === "training"
         || $table_id === "tool"
         || $table_id === "member_plan"
+        || $table_id === "payment"
         ) {
         $class = "bigtable";
     } else {
