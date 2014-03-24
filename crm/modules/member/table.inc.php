@@ -348,8 +348,8 @@ function member_plan_table ($opts = NULL) {
     if (user_access('member_plan_edit')) {
         $table['columns'][] = array('title'=>'Name','class'=>'');
         $table['columns'][] = array('title'=>'Price','class'=>'');
-        $table['columns'][] = array('title'=>'Active','class'=>'');
         $table['columns'][] = array('title'=>'Voting','class'=>'');
+        $table['columns'][] = array('title'=>'Active','class'=>'');
         $table['columns'][] = array('title'=>'Ops','class'=>'');
     }
 
@@ -363,8 +363,8 @@ function member_plan_table ($opts = NULL) {
             // Add cells
             $row[] = $plan['name'];
             $row[] = $plan['price'];
-            $row[] = $plan['active'] ? 'Yes' : 'No';
             $row[] = $plan['voting'] ? 'Yes' : 'No';
+            $row[] = $plan['active'] ? 'Yes' : 'No';
         }
         
         // Construct ops array
