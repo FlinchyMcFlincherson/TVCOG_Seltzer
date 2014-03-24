@@ -48,14 +48,29 @@ function training_permissions () {
  */
 function training_install($old_revision = 0) {
     if ($old_revision < 1) {
+
+        // Create table for training course records
         $sql = '
-            CREATE TABLE IF NOT EXISTS `training` (
-              `tid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+            CREATE TABLE IF NOT EXISTS `training_courses` (
+              `tcid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+              `description` varchar(255) NOT NULL,
+              `class` varchar(255) NOT NULL,
+              PRIMARY KEY (`tcid`)
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+        ';
+
+        $res = mysql_query($sql);
+        if (!$res) die(mysql_error());
+
+        // Create lookup table for member training history records
+        $sql = '
+            CREATE TABLE IF NOT EXISTS `training_history` (
+              `thid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+              `tcid` mediumint(8) unsigned NOT NULL,
               `cid` mediumint(8) unsigned NOT NULL,
-              `start` date DEFAULT NULL,
-              `end` date DEFAULT NULL,
-              `serial` varchar(255) NOT NULL,
-              PRIMARY KEY (`tid`)
+              `completed` date DEFAULT NULL,
+              `instruct` date DEFAULT NULL,
+              PRIMARY KEY (`thid`)
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
         ';
 
@@ -96,28 +111,81 @@ function training_install($old_revision = 0) {
 // Utility functions ///////////////////////////////////////////////////////////
 
 /**
- * Generate a descriptive string for a single training.
+ * Generate a descriptive string for a single training course.
  *
- * @param $tid The tid of the training to describe.
+ * @param $tcid The tcid of the training course to describe.
  * @return The description string.
  */
-function training_description ($tid) {
+function training_course_description ($tcid) {
     
     // Get training data
-    $data = crm_get_data('training', array('tid' => $tid));
+    $data = crm_get_data('training_course', array('tcid' => $tcid));
     if (empty($data)) {
         return '';
     }
-    $training = $data[0];
+    $training_course = $data[0];
     
     // Construct description
-    $description = 'Training ';
-    $description .= $training['serial'];
+    $description = 'Training Course: ';
+    $description .= $training_course['description'];
+    $description .= ' - Class: ';
+    $description .= $training_course['class'];
+
     
     return $description;
 }
 
 // DB to Object mapping ////////////////////////////////////////////////////////
+
+/**
+ * Return data for one or more traning courses.
+ * 
+ * @param $opts An associative array of options, possible keys are:
+ *   'tcid' If specified, returns a single training course with the matching id,
+ *   'filter' An array mapping filter names to filter values
+ * @return An array with each element representing a training course.
+ */
+function training_course_data ($opts = array()) {
+    
+    // Construct query for training_courses
+    $sql = "SELECT * FROM `training_course` WHERE 1";
+    
+    /*
+    if (isset($opts['filter'])) {
+        foreach ($opts['filter'] as $name => $param) {
+            switch ($name) {
+                case '':
+                    if ($param) {
+                        $sql .= " AND `training_courses`.`` <> ";
+                    } else {
+                        $sql .= " AND `training_courses`.`` = ";
+                    }
+                    break;
+            }
+        }
+    }
+    */
+
+    if (!empty($opts['tcid'])) {
+        $tcid = mysql_real_escape_string($opts[tcid]);
+        $sql .= " AND `training_course`.`tcid`='$tcid' ";
+    }
+
+    // Query database for training_courses
+    $res = mysql_query($sql);
+    if (!$res) { crm_error(mysql_error()); }
+    
+    // Store training_courses
+    $training_courses = array();
+    $row = mysql_fetch_assoc($res);
+    while ($row) {
+        $training_courses[] = $row;
+        $row = mysql_fetch_assoc($res);
+    }
+    
+    return $training_courses;
+}
+
 
 /**
  * Return data for one or more training records.
@@ -129,6 +197,7 @@ function training_description ($tid) {
  *   'join' A list of tables to join to the training table.
  * @return An array with each element representing a single training record.
 */ 
+/*
 function training_data ($opts = array()) {
     // Query database
     $sql = "
@@ -185,6 +254,7 @@ function training_data ($opts = array()) {
     // Return data
     return $trainings;
 }
+*/
 
 /**
  * Implementation of hook_data_alter().
@@ -193,6 +263,7 @@ function training_data ($opts = array()) {
  * @param $opts An associative array of options.
  * @return An array of modified structures.
  */
+/*
 function training_data_alter ($type, $data = array(), $opts = array()) {
     switch ($type) {
         case 'contact':
@@ -222,6 +293,7 @@ function training_data_alter ($type, $data = array(), $opts = array()) {
     }
     return $data;
 }
+*/
 
 /**
  * Save a training structure.  If $training has a 'tid' element, an existing training will
@@ -229,6 +301,7 @@ function training_data_alter ($type, $data = array(), $opts = array()) {
  * @param $tid The training structure
  * @return The training structure as it now exists in the database.
  */
+/*
 function training_save ($training) {
     // Escape values
     $fields = array('tid', 'cid', 'serial', 'start', 'end');
@@ -272,11 +345,13 @@ function training_save ($training) {
     }
     return crm_get_one('training', array('tid'=>$tid));
 }
+*/
 
 /**
  * Delete a training record.
  * @param $training The training data structure to delete, must have a 'tid' element.
  */
+/*
 function training_delete ($training) {
     $esc_tid = mysql_real_escape_string($training['tid']);
     $sql = "DELETE FROM `training` WHERE `tid`='$esc_tid'";
@@ -286,6 +361,7 @@ function training_delete ($training) {
         message_register('Training record deleted.');
     }
 }
+*/
 
 // Table data structures ///////////////////////////////////////////////////////
 
@@ -295,6 +371,7 @@ function training_delete ($training) {
  * @param $opts The options to pass to training_data().
  * @return The table structure.
 */
+/*
 function training_table ($opts) {
     // Determine settings
     $export = false;
@@ -364,6 +441,7 @@ function training_table ($opts) {
     }
     return $table;
 }
+*/
 
 // Forms ///////////////////////////////////////////////////////////////////////
 
@@ -373,6 +451,7 @@ function training_table ($opts) {
  * @param The cid of the contact to add a training record for.
  * @return The form structure.
 */
+/*
 function training_add_form ($cid) {
     
     // Ensure user is allowed to edit training records
@@ -422,6 +501,7 @@ function training_add_form ($cid) {
     
     return $form;
 }
+*/
 
 /**
  * Return the form structure for an edit training record form.
@@ -429,6 +509,7 @@ function training_add_form ($cid) {
  * @param $tid The tid of the training record to edit.
  * @return The form structure.
 */
+/*
 function training_edit_form ($tid) {
     // Ensure user is allowed to edit training
     if (!user_access('training_edit')) {
@@ -493,6 +574,7 @@ function training_edit_form ($tid) {
     
     return $form;
 }
+*/
 
 /**
  * Return the delete training record form structure.
@@ -500,6 +582,7 @@ function training_edit_form ($tid) {
  * @param $tid The tid of the training record to delete.
  * @return The form structure.
 */
+/*
 function training_delete_form ($tid) {
     
     // Ensure user is allowed to delete training records
@@ -542,6 +625,7 @@ function training_delete_form ($tid) {
     
     return $form;
 }
+*/
 
 // Request Handlers ////////////////////////////////////////////////////////////
 
@@ -551,6 +635,7 @@ function training_delete_form ($tid) {
  * @param &$url A reference to the url to be loaded after completion.
  * @param &$params An associative array of query parameters for &$url.
  */
+/*
 function training_command ($command, &$url, &$params) {
     switch ($command) {
         case 'member_add':
@@ -558,12 +643,14 @@ function training_command ($command, &$url, &$params) {
             break;
     }
 }
+*/
 
 /**
  * Handle training add request.
  *
  * @return The url to display on completion.
  */
+/*
 function command_training_add() {
     // Verify permissions
     if (!user_access('training_edit')) {
@@ -573,12 +660,14 @@ function command_training_add() {
     training_save($_POST);
     return crm_url('contact&cid=' . $_POST['cid'] . '&tab=trainings');
 }
+*/
 
 /**
  * Handle training record update request.
  *
  * @return The url to display on completion.
  */
+/*
 function command_training_update() {
     // Verify permissions
     if (!user_access('training_edit')) {
@@ -589,12 +678,14 @@ function command_training_update() {
     training_save($_POST);
     return crm_url('training&tid=' . $_POST['tid'] . '&tab=edit');
 }
+*/
 
 /**
  * Handle training record delete request.
  *
  * @return The url to display on completion.
  */
+/*
 function command_training_delete() {
     global $esc_post;
     // Verify permissions
@@ -605,12 +696,14 @@ function command_training_delete() {
     training_delete($_POST);
     return crm_url('members');
 }
+*/
 
 // Pages ///////////////////////////////////////////////////////////////////////
 
 /**
  * @return An array of pages provided by this module.
  */
+/*
 function training_page_list () {
     $pages = array();
     if (user_access('training_view')) {
@@ -618,6 +711,7 @@ function training_page_list () {
     }
     return $pages;
 }
+*/
 
 /**
  * Page hook.  Adds module content to a page before it is rendered.
@@ -626,6 +720,7 @@ function training_page_list () {
  * @param $page_name The name of the page being rendered.
  * @param $options The array of options passed to theme('page').
 */
+/*
 function training_page (&$page_data, $page_name, $options) {
     
     switch ($page_name) {
@@ -674,6 +769,7 @@ function training_page (&$page_data, $page_name, $options) {
             break;
     }
 }
+*/
 
 // Themeing ////////////////////////////////////////////////////////////////////
 
@@ -683,9 +779,11 @@ function training_page (&$page_data, $page_name, $options) {
  * @param $cid The id of the contact to add a training record for.
  * @return The themed html string.
  */
+/*
 function theme_training_add_form ($cid) {
     return theme('form', crm_get_form('training_add', $cid));
 }
+*/
 
 /**
  * Return themed html for an edit training record form.
@@ -693,8 +791,10 @@ function theme_training_add_form ($cid) {
  * @param $tid The tid of the training record to edit.
  * @return The themed html string.
  */
+/*
 function theme_training_edit_form ($tid) {
     return theme('form', crm_get_form('training_edit', $tid));
 }
+*/
 
 ?>
