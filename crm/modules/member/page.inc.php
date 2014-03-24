@@ -52,7 +52,7 @@ function member_page (&$page_data, $page_name, $options) {
         case 'members':
             
             // Set page title
-            page_set_title($page_data, 'Members');
+            page_set_title($page_data, 'All Member Records');
             
             // Add view tab
             if (user_access('member_view')) {
@@ -121,7 +121,7 @@ function member_page (&$page_data, $page_name, $options) {
         case 'plans':
             
             // Set page title
-            page_set_title($page_data, 'Plans');
+            page_set_title($page_data, 'Membership Plans');
             
             // Add view, add and import tabs
             if (user_access('member_plan_edit')) {
@@ -141,7 +141,7 @@ function member_page (&$page_data, $page_name, $options) {
             }
             
             // Set page title
-            page_set_title($page_data, 'Plan: ' . theme('member_plan_description', $pid));
+            page_set_title($page_data, 'Membership Plan: ' . theme('member_plan_description', $pid));
             
             // Add edit tab
             if (user_access('member_plan_edit')) {

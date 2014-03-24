@@ -648,7 +648,7 @@ function key_page (&$page_data, $page_name, $options) {
             break;
         
         case 'keys':
-            page_set_title($page_data, 'Keys');
+            page_set_title($page_data, 'All RFID Key Records');
             if (user_access('key_view')) {
                 $keys = theme('table', 'key', array('join'=>array('contact', 'member'), 'show_export'=>true));
                 page_add_content_top($page_data, $keys, 'View');

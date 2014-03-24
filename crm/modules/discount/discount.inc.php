@@ -691,7 +691,7 @@ function discount_page (&$page_data, $page_name, $options) {
             break;
         
         case 'discounts':
-            page_set_title($page_data, 'Discounts');
+            page_set_title($page_data, 'All Discount Records');
             if (user_access('discount_view')) {
                 $discounts = theme('table', 'discount', array('join'=>array('contact', 'member'), 'show_export'=>true));
                 page_add_content_top($page_data, $discounts, 'View');

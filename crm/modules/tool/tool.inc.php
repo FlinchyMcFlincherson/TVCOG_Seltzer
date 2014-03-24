@@ -878,7 +878,7 @@ function tool_page (&$page_data, $page_name, $options) {
         case 'tools':
             
             // Set page title
-            page_set_title($page_data, 'Tools');
+            page_set_title($page_data, 'Tool Inventory');
             
             // Add view, add and import tabs
             if (user_access('tool_view')) {
